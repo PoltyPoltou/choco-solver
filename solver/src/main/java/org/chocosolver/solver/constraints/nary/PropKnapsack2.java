@@ -11,7 +11,11 @@ package org.chocosolver.solver.constraints.nary;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
+import org.chocosolver.memory.IEnvironment;
+import org.chocosolver.memory.structure.IOperation;
 import org.chocosolver.solver.constraints.Propagator;
 import org.chocosolver.solver.constraints.PropagatorPriority;
 import org.chocosolver.solver.exception.ContradictionException;
@@ -37,31 +41,37 @@ public class PropKnapsack2 extends Propagator<IntVar> {
     //***********************************************************************************
 
     private final int[] order;
+    private final int[] weight;
+    private final int[] energy;
     private final double[] ratio;
     private final int n;
     private int deltaCapacity;
-    private final int capacity;
+    private final IntVar capacity;
     private int deltaLB;
-    private final IntVar profitLB;
+    private final IntVar power;
     private final int[] itemState;
     private final ItemFindingSearchTree findingTree;
     private final ComputingLossWeightTree computingTree;
     private final ArrayList<KPItem> orderedItems;
-    private Info criticalItemInfos;
+    private Info criticalItemInfosLower;
+    private Info criticalItemInfosUpper;
+
     //***********************************************************************************
     // CONSTRUCTORS
     //***********************************************************************************
 
-    public PropKnapsack2(IntVar[] itemOccurence, int capacity, IntVar profitLB,
+    public PropKnapsack2(IntVar[] itemOccurence, IntVar capacity, IntVar power,
                         int[] weight, int[] energy) {
-        super(ArrayUtils.append(itemOccurence, new IntVar[]{profitLB}), PropagatorPriority.LINEAR, false);
+        super(ArrayUtils.append(itemOccurence, new IntVar[]{capacity, power}), PropagatorPriority.LINEAR, false);
         this.n = itemOccurence.length;
         this.itemState = new int[n];
-        Arrays.fill(this.itemState, 0);
-        this.profitLB = vars[n];
         this.deltaCapacity = 0;
-        this.capacity = capacity;
         this.deltaLB = 0;
+        this.capacity = capacity;
+        this.weight = weight;
+        this.energy = energy;
+        this.power = vars[n];
+        Arrays.fill(this.itemState, 0);
         // ratio energy/weight of every item (not ordred)
         this.ratio = new double[n];
         for (int i = 0; i < n; i++) {
@@ -78,7 +88,7 @@ public class PropKnapsack2 extends Propagator<IntVar> {
         }
         this.findingTree = new ItemFindingSearchTree(orderedItems);
         this.computingTree = new ComputingLossWeightTree(orderedItems);
-        this.criticalItemInfos = this.computingTree.findCriticalItem(this.capacity);
+
     }
 
     //***********************************************************************************
@@ -97,7 +107,8 @@ public class PropKnapsack2 extends Propagator<IntVar> {
             This method is called once at initialization
             We will not call it afterwards
         */
-        this.criticalItemInfos = computingTree.findCriticalItem(capacity);
+        this.criticalItemInfosLower = this.computingTree.findCriticalItem(this.capacity.getLB());
+        this.criticalItemInfosUpper = this.computingTree.findCriticalItem(this.capacity.getUB());
     }
     @Override
     public void propagate(int varIdx, int mask) throws ContradictionException {
@@ -118,11 +129,25 @@ public class PropKnapsack2 extends Propagator<IntVar> {
 
     @Override
     public ESat isEntailed() {
+        double camax = capacity.getUB();
+        double pomin = 0;
+        for (int i = 0; i < n; i++) {
+            camax -= (long)weight[i] * vars[i].getLB(); // potential overflow
+            pomin += (long)energy[i] * vars[i].getLB(); // potential overflow
+        }
+        if (camax < 0 || pomin > power.getUB()) {
+            return ESat.FALSE;
+        }
+        if (isCompletelyInstantiated()) {
+            if (pomin == power.getValue()) {
+                return ESat.TRUE;
+            }
+        }
         return ESat.UNDEFINED;
     }
     /**
      * changes the constraint such that the item is in the solution
-     *
+     * Informs backtrack environment what to do
      * @param i index of an item in the list given in the constructor
      */
     private void addItemToSolution(int i) {
@@ -135,12 +160,13 @@ public class PropKnapsack2 extends Propagator<IntVar> {
             findingTree.removeLeaf(globalLeafIndex);
             deltaCapacity -= item.getWeight();
             deltaLB -= item.getProfit();
+            getEnvironment(i).save(activateItemBacktrackOperation(i));
         }
     }
 
     /**
      * changes the constraint such that the item is NOT in the solution
-     *
+     * Informs backtrack environment what to do
      * @param i index of an item in the list given in the constructor
      */
     private void removeItemFromProblem(int i) {
@@ -150,6 +176,7 @@ public class PropKnapsack2 extends Propagator<IntVar> {
             int globalLeafIndex = computingTree.leafToGlobalIndex(sortedIndex);
             computingTree.removeLeaf(globalLeafIndex);
             findingTree.removeLeaf(globalLeafIndex);
+            getEnvironment(i).save(activateItemBacktrackOperation(i));
         }
     }
 
@@ -161,6 +188,7 @@ public class PropKnapsack2 extends Propagator<IntVar> {
     private void activateItemToProblem(int i) {
         int sortedIndex = computingTree.leafToGlobalIndex(this.order[i]);
         if (this.itemState[i] != NOT_DEFINED) {
+            KPItem item = computingTree.getLeaf(sortedIndex);
             int globalLeafIndex = computingTree.leafToGlobalIndex(sortedIndex);
             computingTree.activateLeaf(globalLeafIndex);
             findingTree.activateLeaf(globalLeafIndex);
@@ -171,22 +199,27 @@ public class PropKnapsack2 extends Propagator<IntVar> {
             this.itemState[i] = NOT_DEFINED;
         }
     }
+
+    private IOperation activateItemBacktrackOperation(int i){
+        return () -> activateItemToProblem(i);
+    }
+
     private List<Integer> findMandatoryItems() {
         List<Integer> mandatoryList = new LinkedList<>();
-        int index = 0;
+        int index = computingTree.leafToGlobalIndex(0);
         int maxWeight = 0;
         do {
             if (computingTree.isMandatory(
-                    criticalItemInfos.weight + deltaCapacity,
-                    criticalItemInfos.profit,
-                    criticalItemInfos.index,
-                    profitLB.getUB() + deltaLB,
+                    criticalItemInfosUpper.weight + deltaCapacity,
+                    criticalItemInfosUpper.profit,
+                    criticalItemInfosUpper.index,
+                    power.getUB() + deltaLB,
                     index)) {
                 mandatoryList.add(index);
             } else {
                 maxWeight = Math.max(maxWeight, findingTree.getNodeWeight(index));
             }
-            index = findingTree.findNextRightItem(index, criticalItemInfos.index, maxWeight);
+            index = findingTree.findNextRightItem(index, criticalItemInfosUpper.index, maxWeight);
         } while (index != -1);
         return mandatoryList;
     }
@@ -194,20 +227,24 @@ public class PropKnapsack2 extends Propagator<IntVar> {
     private List<Integer> findForbiddenItems() {
         List<Integer> forbiddenList = new LinkedList<>();
         int index = findingTree.getNumberNodes() - 1;
-        int minWeight = 0;
+        int minWeight = Integer.MAX_VALUE;
         do {
             if (computingTree.isForbidden(
-                    criticalItemInfos.weight + deltaCapacity,
-                    criticalItemInfos.profit,
-                    criticalItemInfos.index,
-                    profitLB.getLB() + deltaLB,
+                    criticalItemInfosLower.weight + deltaCapacity,
+                    criticalItemInfosLower.profit,
+                    criticalItemInfosLower.index,
+                    power.getLB() + deltaLB,
                     index)) {
                 forbiddenList.add(index);
             } else {
                 minWeight = Math.min(minWeight, findingTree.getNodeWeight(index));
             }
-            index = findingTree.findNextLeftItem(index, criticalItemInfos.index, minWeight);
+            index = findingTree.findNextLeftItem(index, criticalItemInfosLower.index, minWeight);
         } while (index != -1);
         return forbiddenList;
+    }
+
+    private IEnvironment getEnvironment(int varIdx){
+        return this.vars[0].getEnvironment();
     }
 }
