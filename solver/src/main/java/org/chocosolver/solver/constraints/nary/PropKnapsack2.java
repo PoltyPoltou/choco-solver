@@ -26,6 +26,7 @@ import org.chocosolver.util.sort.ArraySort;
 import org.chocosolver.util.tools.ArrayUtils;
 
 import org.chocosolver.solver.constraints.nary.knapsack.*;
+
 /**
  * Propagator for the Knapsack constraint
  * based on Dantzig-Wolfe relaxation
@@ -36,9 +37,9 @@ public class PropKnapsack2 extends Propagator<IntVar> {
     static final int ADDED = 1;
     static final int REMOVED = -1;
     static final int NOT_DEFINED = 0;
-    //***********************************************************************************
+    // ***********************************************************************************
     // VARIABLES
-    //***********************************************************************************
+    // ***********************************************************************************
 
     private final int[] order;
     private final int[] weight;
@@ -56,13 +57,13 @@ public class PropKnapsack2 extends Propagator<IntVar> {
     private Info criticalItemInfosLower;
     private Info criticalItemInfosUpper;
 
-    //***********************************************************************************
+    // ***********************************************************************************
     // CONSTRUCTORS
-    //***********************************************************************************
+    // ***********************************************************************************
 
     public PropKnapsack2(IntVar[] itemOccurence, IntVar capacity, IntVar power,
-                        int[] weight, int[] energy) {
-        super(ArrayUtils.append(itemOccurence, new IntVar[]{capacity, power}), PropagatorPriority.LINEAR, false);
+            int[] weight, int[] energy) {
+        super(ArrayUtils.append(itemOccurence, new IntVar[] { capacity, power }), PropagatorPriority.LINEAR, false);
         this.n = itemOccurence.length;
         this.itemState = new int[n];
         this.deltaCapacity = 0;
@@ -75,55 +76,66 @@ public class PropKnapsack2 extends Propagator<IntVar> {
         // ratio energy/weight of every item (not ordred)
         this.ratio = new double[n];
         for (int i = 0; i < n; i++) {
-            ratio[i] = weight[i] == 0?Double.MAX_VALUE : ((double) (energy[i]) / (double) (weight[i]));
+            ratio[i] = weight[i] == 0 ? Double.MAX_VALUE : ((double) (energy[i]) / (double) (weight[i]));
         }
         // we find the decreasing order of efficiency
-        this.order = ArrayUtils.array(0,n-1);
-        ArraySort sorter = new ArraySort(n,false,true);
-        sorter.sort(order, n, (i1, i2) -> Double.compare(ratio[i2],ratio[i1]));
+        this.order = ArrayUtils.array(0, n - 1);
+        ArraySort sorter = new ArraySort(n, false, true);
+        sorter.sort(order, n, (i1, i2) -> Double.compare(ratio[i2], ratio[i1]));
         this.orderedItems = new ArrayList<>();
         orderedItems.ensureCapacity(n);
         for (int i = 0; i < n; ++i) {
-            orderedItems.set(i, new KPItem(energy[order[i]],weight[order[i]]));
+            orderedItems.set(i, new KPItem(energy[order[i]], weight[order[i]]));
         }
         this.findingTree = new ItemFindingSearchTree(orderedItems);
         this.computingTree = new ComputingLossWeightTree(orderedItems);
 
     }
 
-    //***********************************************************************************
+    // ***********************************************************************************
     // METHODS
-    //***********************************************************************************
+    // ***********************************************************************************
 
     @Override
     public int getPropagationConditions(int vIdx) {
-        return IntEventType.boundAndInst();
+        if (vIdx < n + 1) {
+            // updates on the weight or on an item
+            return IntEventType.boundAndInst();
+        } else {
+            // updates on the LB variable, we do nothing
+            return IntEventType.VOID.getMask();
+        }
     }
 
     @Override
     public void propagate(int evtmask) throws ContradictionException {
         /*
-            TODO remove this comment
-            This method is called once at initialization
-            We will not call it afterwards
-        */
+         * TODO remove this comment
+         * This method is called once at initialization
+         * We will not call it afterwards
+         */
         this.criticalItemInfosLower = this.computingTree.findCriticalItem(this.capacity.getLB());
         this.criticalItemInfosUpper = this.computingTree.findCriticalItem(this.capacity.getUB());
     }
+
     @Override
     public void propagate(int varIdx, int mask) throws ContradictionException {
         /*
-            TODO remove this comment
-            This method is called when varIdx changes according to mask
-        */
-        if(varIdx < n){
+         * TODO remove this comment
+         * This method is called when varIdx changes according to mask
+         */
+        if (varIdx < n) {
             // item changed
             // we update the trees
-            if(this.vars[varIdx].getValue() == 0){
+            if (this.vars[varIdx].getValue() == 0) {
                 this.removeItemFromProblem(varIdx);
-            }else if(this.vars[varIdx].getValue() == 1){
+            } else if (this.vars[varIdx].getValue() == 1) {
                 this.addItemToSolution(varIdx);
             }
+        } else if (varIdx == n && mask == IntEventType.DECUPP.getMask()) {
+            this.criticalItemInfosUpper = this.computingTree.findCriticalItem(this.capacity.getUB());
+        } else if (varIdx == n && mask == IntEventType.INCLOW.getMask()) {
+            this.criticalItemInfosLower = this.computingTree.findCriticalItem(this.capacity.getLB());
         }
     }
 
@@ -132,8 +144,8 @@ public class PropKnapsack2 extends Propagator<IntVar> {
         double camax = capacity.getUB();
         double pomin = 0;
         for (int i = 0; i < n; i++) {
-            camax -= (long)weight[i] * vars[i].getLB(); // potential overflow
-            pomin += (long)energy[i] * vars[i].getLB(); // potential overflow
+            camax -= (long) weight[i] * vars[i].getLB(); // potential overflow
+            pomin += (long) energy[i] * vars[i].getLB(); // potential overflow
         }
         if (camax < 0 || pomin > power.getUB()) {
             return ESat.FALSE;
@@ -145,9 +157,11 @@ public class PropKnapsack2 extends Propagator<IntVar> {
         }
         return ESat.UNDEFINED;
     }
+
     /**
      * changes the constraint such that the item is in the solution
      * Informs backtrack environment what to do
+     * 
      * @param i index of an item in the list given in the constructor
      */
     private void addItemToSolution(int i) {
@@ -167,6 +181,7 @@ public class PropKnapsack2 extends Propagator<IntVar> {
     /**
      * changes the constraint such that the item is NOT in the solution
      * Informs backtrack environment what to do
+     * 
      * @param i index of an item in the list given in the constructor
      */
     private void removeItemFromProblem(int i) {
@@ -192,7 +207,7 @@ public class PropKnapsack2 extends Propagator<IntVar> {
             int globalLeafIndex = computingTree.leafToGlobalIndex(sortedIndex);
             computingTree.activateLeaf(globalLeafIndex);
             findingTree.activateLeaf(globalLeafIndex);
-            if(this.itemState[i] == ADDED) {
+            if (this.itemState[i] == ADDED) {
                 deltaCapacity += item.getWeight();
                 deltaLB += item.getProfit();
             }
@@ -200,7 +215,7 @@ public class PropKnapsack2 extends Propagator<IntVar> {
         }
     }
 
-    private IOperation activateItemBacktrackOperation(int i){
+    private IOperation activateItemBacktrackOperation(int i) {
         return () -> activateItemToProblem(i);
     }
 
@@ -244,7 +259,7 @@ public class PropKnapsack2 extends Propagator<IntVar> {
         return forbiddenList;
     }
 
-    private IEnvironment getEnvironment(int varIdx){
+    private IEnvironment getEnvironment(int varIdx) {
         return this.vars[0].getEnvironment();
     }
 }
