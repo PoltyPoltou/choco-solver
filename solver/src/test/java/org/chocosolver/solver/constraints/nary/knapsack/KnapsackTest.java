@@ -38,7 +38,7 @@ public class KnapsackTest {
 		m.setObjective(Model.MAXIMIZE, objective);
 		m.scalar(x, c, "=", objective).post();
 		for (int i = 0; i < M; i++) {
-			m.knapsack2(x, bVar[i], objective, a[i], c).post();
+			m.knapsackOld(x, bVar[i], objective, a[i], c).post();
 		}
 		Solver s = m.getSolver();
 		IntVar[] xCost = new IntVar[N];
@@ -82,7 +82,7 @@ public class KnapsackTest {
 		m.scalar(x, pb.c, "=", objective).post();
 		for (int i = 0; i < pb.M; i++) {
 			if (original) {
-				m.knapsack2(x, bVar[i], objective, pb.a[i], pb.c).post();
+				m.knapsackOld(x, bVar[i], objective, pb.a[i], pb.c).post();
 			} else {
 				m.knapsack(x, bVar[i], objective, pb.a[i], pb.c).post();
 			}

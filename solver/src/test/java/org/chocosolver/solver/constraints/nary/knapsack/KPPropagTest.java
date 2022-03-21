@@ -60,7 +60,7 @@ public class KPPropagTest {
         }
         IntVar profit = m.intVar(pLB, pUB);
         IntVar weight = m.intVar(wLB, wUB);
-        m.knapsack2(x, weight, profit, w, p).post();
+        m.knapsackOld(x, weight, profit, w, p).post();
         Solver sol = m.getSolver();
         // sol.setSearch(Search.domOverWDegSearch(profit),
         // Search.domOverWDegSearch(weight), Search.defaultSearch(m));
