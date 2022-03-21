@@ -23,8 +23,7 @@ import org.chocosolver.solver.constraints.extension.nary.*;
 import org.chocosolver.solver.constraints.nary.PropDiffN;
 import org.chocosolver.solver.constraints.nary.PropIntValuePrecedeChain;
 import org.chocosolver.solver.constraints.nary.PropKLoops;
-import org.chocosolver.solver.constraints.nary.PropKnapsack;
-import org.chocosolver.solver.constraints.nary.PropKnapsack2;
+import org.chocosolver.solver.constraints.nary.PropKnapsackKatriel;
 import org.chocosolver.solver.constraints.nary.alldifferent.AllDifferent;
 import org.chocosolver.solver.constraints.nary.alldifferent.conditions.Condition;
 import org.chocosolver.solver.constraints.nary.alldifferent.conditions.PropCondAllDiffInst;
@@ -85,7 +84,8 @@ import java.util.stream.Stream;
 /**
  * Interface to make constraints over BoolVar and IntVar
  * <p>
- * A kind of factory relying on interface default implementation to allow (multiple) inheritance
+ * A kind of factory relying on interface default implementation to allow
+ * (multiple) inheritance
  *
  * @author Jean-Guillaume FAGES
  * @author Charles Prud'homme
@@ -93,9 +93,10 @@ import java.util.stream.Stream;
  */
 public interface IIntConstraintFactory extends ISelf<Model> {
 
-    //##################################################################################################################
-    // UNARIES #########################################################################################################
-    //##################################################################################################################
+    // ##################################################################################################################
+    // UNARIES
+    // #########################################################################################################
+    // ##################################################################################################################
 
     /**
      * Creates an arithmetic constraint : var op cste,
@@ -155,7 +156,8 @@ public interface IIntConstraintFactory extends ISelf<Model> {
 
     /**
      * Gets the opposite of a given constraint
-     * Works for any constraint, including globals, but the associated performances might be weak
+     * Works for any constraint, including globals, but the associated performances
+     * might be weak
      *
      * @param cstr a constraint
      * @return the opposite constraint of <i>cstr</i>
@@ -209,9 +211,10 @@ public interface IIntConstraintFactory extends ISelf<Model> {
         return new NotMember(var, set);
     }
 
-    //##################################################################################################################
-    //BINARIES #########################################################################################################
-    //##################################################################################################################
+    // ##################################################################################################################
+    // BINARIES
+    // #########################################################################################################
+    // ##################################################################################################################
 
     /**
      * Creates an absolute value constraint: var1 = |var2|
@@ -328,7 +331,8 @@ public interface IIntConstraintFactory extends ISelf<Model> {
         if (operator != Operator.EQ && operator != Operator.GT && operator != Operator.LT && operator != Operator.NQ) {
             throw new SolverException("Unexpected operator for distance");
         }
-        return new Constraint(ConstraintsName.DISTANCE, new PropDistanceXYC(ArrayUtils.toArray(var1, var2), operator, cste));
+        return new Constraint(ConstraintsName.DISTANCE,
+                new PropDistanceXYC(ArrayUtils.toArray(var1, var2), operator, cste));
     }
 
     /**
@@ -377,6 +381,7 @@ public interface IIntConstraintFactory extends ISelf<Model> {
 
     /**
      * Creates a square constraint: var1 = var2^2
+     * 
      * @param var1 a variable
      * @param var2 a variable
      * @return a square constraint
@@ -387,13 +392,13 @@ public interface IIntConstraintFactory extends ISelf<Model> {
             int v1 = var2.getValue();
             if (var1.isInstantiated()) {
                 int v2 = var1.getValue();
-                if(v1 * v1 == v2){
+                if (v1 * v1 == v2) {
                     return ref().trueConstraint();
-                }else{
+                } else {
                     return ref().falseConstraint();
                 }
             } else {
-                return ref().arithm(var1, "=", v1*v1);
+                return ref().arithm(var1, "=", v1 * v1);
             }
         } else {
             if (var1.isInstantiated()) {
@@ -402,8 +407,8 @@ public interface IIntConstraintFactory extends ISelf<Model> {
                     return ref().arithm(var2, "=", 0);
                 } else {
                     if (v2 > 0 && MathUtils.isPerfectSquare(v2)) {
-                        int sqt = (int)Math.sqrt(v2);
-                        return ref().member(var2, new int[]{-sqt, sqt});
+                        int sqt = (int) Math.sqrt(v2);
+                        return ref().member(var2, new int[] { -sqt, sqt });
                     } else {
                         return ref().falseConstraint();
                     }
@@ -436,21 +441,23 @@ public interface IIntConstraintFactory extends ISelf<Model> {
      * - <b>AC2001</b>: table constraint which applies the AC2001 algorithm,<br/>
      * - <b>AC3</b>: table constraint which applies the AC3 algorithm,<br/>
      * - <b>AC3rm</b>: table constraint which applies the AC3 rm algorithm,<br/>
-     * - <b>AC3bit+rm</b> (default): table constraint which applies the AC3 bit+rm algorithm,<br/>
+     * - <b>AC3bit+rm</b> (default): table constraint which applies the AC3 bit+rm
+     * algorithm,<br/>
      * - <b>FC</b>: table constraint which applies forward checking algorithm.<br/>
      *
      * @param var1   first variable
      * @param var2   second variable
-     * @param tuples the relation between the two variables, among {"AC3", "AC3rm", "AC3bit+rm", "AC2001", "CT+", "FC"}
+     * @param tuples the relation between the two variables, among {"AC3", "AC3rm",
+     *               "AC3bit+rm", "AC2001", "CT+", "FC"}
      */
     default Constraint table(IntVar var1, IntVar var2, Tuples tuples, String algo) {
         Propagator<IntVar> p;
         if (tuples.allowUniversalValue()) {
-            p = new PropCompactTableStar(new IntVar[]{var1, var2}, tuples);
+            p = new PropCompactTableStar(new IntVar[] { var1, var2 }, tuples);
         } else {
             switch (algo) {
                 case "CT+":
-                    p = new PropCompactTable(new IntVar[]{var1, var2}, tuples);
+                    p = new PropCompactTable(new IntVar[] { var1, var2 }, tuples);
                     break;
                 case "AC2001":
                     p = new PropBinAC2001(var1, var2, tuples);
@@ -504,9 +511,10 @@ public interface IIntConstraintFactory extends ISelf<Model> {
         return times(X, Y, X.getModel().intVar(Z));
     }
 
-    //##################################################################################################################
-    //TERNARIES ########################################################################################################
-    //##################################################################################################################
+    // ##################################################################################################################
+    // TERNARIES
+    // ########################################################################################################
+    // ##################################################################################################################
 
     /**
      * Creates an arithmetic constraint: var1 op1 var2 op2 var3,
@@ -522,9 +530,9 @@ public interface IIntConstraintFactory extends ISelf<Model> {
     default Constraint arithm(IntVar var1, String op1, IntVar var2, String op2, IntVar var3) {
         switch (op1) {
             case "+":
-                return scalar(new IntVar[]{var1, var2}, new int[]{1, 1}, op2, var3);
+                return scalar(new IntVar[] { var1, var2 }, new int[] { 1, 1 }, op2, var3);
             case "-":
-                return scalar(new IntVar[]{var1, var2}, new int[]{1, -1}, op2, var3);
+                return scalar(new IntVar[] { var1, var2 }, new int[] { 1, -1 }, op2, var3);
             case "*":
                 // v1 * v2 = v3
                 if (Operator.EQ.name().equals(op2)) {
@@ -572,9 +580,9 @@ public interface IIntConstraintFactory extends ISelf<Model> {
                             return arithm(var1, op1, var4);
                         }
                     case "+":
-                        return scalar(new IntVar[]{var1, var3}, new int[]{1, -1}, op1, var2);
+                        return scalar(new IntVar[] { var1, var3 }, new int[] { 1, -1 }, op1, var2);
                     case "-":
-                        return scalar(new IntVar[]{var1, var3}, new int[]{1, 1}, op1, var2);
+                        return scalar(new IntVar[] { var1, var3 }, new int[] { 1, 1 }, op1, var2);
                     default:
                         throw new SolverException("Unknown operators for arithm constraint");
                 }
@@ -594,15 +602,20 @@ public interface IIntConstraintFactory extends ISelf<Model> {
     default Constraint distance(IntVar var1, IntVar var2, String op, IntVar var3) {
         switch (Operator.get(op)) {
             case EQ:
-                return new Constraint(ConstraintsName.DISTANCE, new PropEQDistanceXYZ(ArrayUtils.toArray(var1, var2, var3)));
+                return new Constraint(ConstraintsName.DISTANCE,
+                        new PropEQDistanceXYZ(ArrayUtils.toArray(var1, var2, var3)));
             case LE:
-                return new Constraint(ConstraintsName.DISTANCE, new PropLEDistanceXYZ(ArrayUtils.toArray(var1, var2, var3)));
+                return new Constraint(ConstraintsName.DISTANCE,
+                        new PropLEDistanceXYZ(ArrayUtils.toArray(var1, var2, var3)));
             case GE:
-                return new Constraint(ConstraintsName.DISTANCE, new PropGEDistanceXYZ(ArrayUtils.toArray(var1, var2, var3)));
+                return new Constraint(ConstraintsName.DISTANCE,
+                        new PropGEDistanceXYZ(ArrayUtils.toArray(var1, var2, var3)));
             case LT:
-                return new Constraint(ConstraintsName.DISTANCE, new PropLTDistanceXYZ(ArrayUtils.toArray(var1, var2, var3)));
+                return new Constraint(ConstraintsName.DISTANCE,
+                        new PropLTDistanceXYZ(ArrayUtils.toArray(var1, var2, var3)));
             case GT:
-                return new Constraint(ConstraintsName.DISTANCE, new PropGTDistanceXYZ(ArrayUtils.toArray(var1, var2, var3)));
+                return new Constraint(ConstraintsName.DISTANCE,
+                        new PropGTDistanceXYZ(ArrayUtils.toArray(var1, var2, var3)));
             default:
                 throw new SolverException("Unexpected operator for distance: " + op);
         }
@@ -634,7 +647,7 @@ public interface IIntConstraintFactory extends ISelf<Model> {
     }
 
     /**
-     * Creates a minimum constraint:  min = min(var1, var2)
+     * Creates a minimum constraint: min = min(var1, var2)
      * (Bound Consistency)
      *
      * @param min  a variable
@@ -670,7 +683,7 @@ public interface IIntConstraintFactory extends ISelf<Model> {
         if (Y.isInstantiated()) {
             return mod(X, Y.getValue(), Z);
         } else if (TuplesFactory.canBeTupled(X, Y, Z)) {
-            return table(new IntVar[]{X, Y, Z}, TuplesFactory.modulo(X, Y, Z));
+            return table(new IntVar[] { X, Y, Z }, TuplesFactory.modulo(X, Y, Z));
         } else {
             return new Constraint(X.getName() + " MOD " + Y.getName() + " = " + Z.getName(), new PropModXYZ(X, Y, Z));
         }
@@ -690,20 +703,22 @@ public interface IIntConstraintFactory extends ISelf<Model> {
         } else if (X.isInstantiated()) {
             return times(Y, X.getValue(), Z);
         } else if (TuplesFactory.canBeTupled(X, Y, Z)) {
-            return table(new IntVar[]{X, Y, Z}, TuplesFactory.times(X, Y, Z));
+            return table(new IntVar[] { X, Y, Z }, TuplesFactory.times(X, Y, Z));
         } else {
             return new Constraint(ConstraintsName.TIMES, new PropTimesNaive(X, Y, Z));
         }
     }
 
-    //##################################################################################################################
-    //GLOBALS ##########################################################################################################
-    //##################################################################################################################
+    // ##################################################################################################################
+    // GLOBALS
+    // ##########################################################################################################
+    // ##################################################################################################################
 
     /**
      * Creates an allDifferent constraint.
      * Ensures that all variables from vars take a different value.
-     * Uses BC plus a probabilistic AC propagator to get a compromise between BC and AC
+     * Uses BC plus a probabilistic AC propagator to get a compromise between BC and
+     * AC
      *
      * @param vars list of variables
      */
@@ -717,30 +732,36 @@ public interface IIntConstraintFactory extends ISelf<Model> {
      * The consistency level should be chosen among "BC", "AC" and "DEFAULT".
      *
      * @param vars        list of variables
-     * @param CONSISTENCY consistency level, among {"BC", "AC_REGIN", "AC", "AC_ZHANG", "DEFAULT"}
+     * @param CONSISTENCY consistency level, among {"BC", "AC_REGIN", "AC",
+     *                    "AC_ZHANG", "DEFAULT"}
      *                    <p>
      *                    <b>BC</b>:
-     *                    Based on: "A Fast and Simple Algorithm for Bounds Consistency of the AllDifferent Constraint"</br>
+     *                    Based on: "A Fast and Simple Algorithm for Bounds
+     *                    Consistency of the AllDifferent Constraint"</br>
      *                    A. Lopez-Ortiz, CG. Quimper, J. Tromp, P.van Beek
      *                    <br/>
      *                    <b>AC_REGIN</b>:
      *                    Uses Regin algorithm
-     *                    Runs in O(m.n) worst case time for the initial propagation and then in O(n+m) on average.
+     *                    Runs in O(m.n) worst case time for the initial propagation
+     *                    and then in O(n+m) on average.
      *                    <p>
      *                    <b>AC, AC_ZHANG</b>:
      *                    Uses Zhang improvement of Regin algorithm
      *                    <p>
      *                    <b>DEFAULT</b>:
      *                    <br/>
-     *                    Uses BC plus a probabilistic AC_ZHANG propagator to get a compromise between BC and AC_ZHANG
+     *                    Uses BC plus a probabilistic AC_ZHANG propagator to get a
+     *                    compromise between BC and AC_ZHANG
      */
     default Constraint allDifferent(IntVar[] vars, String CONSISTENCY) {
-        if (vars.length <= 1) return ref().trueConstraint();
+        if (vars.length <= 1)
+            return ref().trueConstraint();
         return new AllDifferent(vars, CONSISTENCY);
     }
 
     /**
-     * Creates an allDifferent constraint subject to the given condition. More precisely:
+     * Creates an allDifferent constraint subject to the given condition. More
+     * precisely:
      * <p>
      * IF <code>singleCondition</code>
      * for all X,Y in vars, condition(X) => X != Y
@@ -748,15 +769,15 @@ public interface IIntConstraintFactory extends ISelf<Model> {
      * for all X,Y in vars, condition(X) AND condition(Y) => X != Y
      *
      * @param vars            collection of variables
-     * @param condition       condition defining which variables should be constrained
+     * @param condition       condition defining which variables should be
+     *                        constrained
      * @param singleCondition specifies how to apply filtering
      */
     default Constraint allDifferentUnderCondition(IntVar[] vars, Condition condition, boolean singleCondition) {
         if (singleCondition) {
             return new Constraint(ConstraintsName.ALLDIFFERENT,
                     new PropCondAllDiffInst(vars, condition, singleCondition),
-                    new PropCondAllDiff_AC(vars, condition)
-            );
+                    new PropCondAllDiff_AC(vars, condition));
         }
         return new Constraint(ConstraintsName.ALLDIFFERENT, new PropCondAllDiffInst(vars, condition, singleCondition));
     }
@@ -772,30 +793,39 @@ public interface IIntConstraintFactory extends ISelf<Model> {
     }
 
     /**
-     * Creates an AllDiffPrec constraint. The predecessors and successors matrix are built as following:
-     * with n = |variables|, for all i in [0,n-1], if there is k such that predecessors[i][k] = j then variables[j] is a predecessor of variables[i].
-     * Similarly, with n = |variables|, for all i in [0,n-1], if there is k such that successors[i][k] = j then variables[j] is a successor of variables[i].
-     * The matrix should be built such that, if variables[i] is a predecessor of variables[j], then i is in successors[j] and vice versa.
+     * Creates an AllDiffPrec constraint. The predecessors and successors matrix are
+     * built as following:
+     * with n = |variables|, for all i in [0,n-1], if there is k such that
+     * predecessors[i][k] = j then variables[j] is a predecessor of variables[i].
+     * Similarly, with n = |variables|, for all i in [0,n-1], if there is k such
+     * that successors[i][k] = j then variables[j] is a successor of variables[i].
+     * The matrix should be built such that, if variables[i] is a predecessor of
+     * variables[j], then i is in successors[j] and vice versa.
      *
-     * filter should be one of the following (depending on the wanted filtering algorithm): BESSIERE, GREEDY, GREEDY_RC, GODET_RC, GODET_BC or DEFAULT (which is GODET_BC).
+     * filter should be one of the following (depending on the wanted filtering
+     * algorithm): BESSIERE, GREEDY, GREEDY_RC, GODET_RC, GODET_BC or DEFAULT (which
+     * is GODET_BC).
      *
-     * @param variables the variables
+     * @param variables    the variables
      * @param predecessors the predecessors matrix
-     * @param successors the successors matrix
-     * @param filter the name of the filtering scheme
+     * @param successors   the successors matrix
+     * @param filter       the name of the filtering scheme
      */
     default Constraint allDiffPrec(IntVar[] variables, int[][] predecessors, int[][] successors, String filter) {
         return new Constraint(
-            ConstraintsName.ALLDIFFPREC,
-            new PropAllDiffPrec(variables, predecessors, successors, filter)
-        );
+                ConstraintsName.ALLDIFFPREC,
+                new PropAllDiffPrec(variables, predecessors, successors, filter));
     }
 
     /**
-     * Creates an AllDiffPrec constraint. The predecessors and successors matrix are built as following:
-     * with n = |variables|, for all i in [0,n-1], if there is k such that predecessors[i][k] = j then variables[j] is a predecessor of variables[i].
-     * Similarly, with n = |variables|, for all i in [0,n-1], if there is k such that successors[i][k] = j then variables[j] is a successor of variables[i].
-     * The matrix should be built such that, if variables[i] is a predecessor of variables[j], then i is in successors[j] and vice versa.
+     * Creates an AllDiffPrec constraint. The predecessors and successors matrix are
+     * built as following:
+     * with n = |variables|, for all i in [0,n-1], if there is k such that
+     * predecessors[i][k] = j then variables[j] is a predecessor of variables[i].
+     * Similarly, with n = |variables|, for all i in [0,n-1], if there is k such
+     * that successors[i][k] = j then variables[j] is a successor of variables[i].
+     * The matrix should be built such that, if variables[i] is a predecessor of
+     * variables[j], then i is in successors[j] and vice versa.
      *
      * @param variables    the variables
      * @param predecessors the predecessors matrix
@@ -806,25 +836,30 @@ public interface IIntConstraintFactory extends ISelf<Model> {
     }
 
     /**
-     * Creates an AllDiffPrec constraint. The precedence matrix is built as following:
-     * with n = |variables|, for all i,j in [0,n-1], precedence[i][j] = true iff precedence[j][i] = false iff variables[i] precedes variables[j].
+     * Creates an AllDiffPrec constraint. The precedence matrix is built as
+     * following:
+     * with n = |variables|, for all i,j in [0,n-1], precedence[i][j] = true iff
+     * precedence[j][i] = false iff variables[i] precedes variables[j].
      *
-     * filter should be one of the following (depending on the wanted filtering algorithm): BESSIERE, GREEDY, GREEDY_RC, GODET_RC, GODET_BC or DEFAULT (which is GODET_BC).
+     * filter should be one of the following (depending on the wanted filtering
+     * algorithm): BESSIERE, GREEDY, GREEDY_RC, GODET_RC, GODET_BC or DEFAULT (which
+     * is GODET_BC).
      *
-     * @param variables the variables
+     * @param variables  the variables
      * @param precedence the precedence matrix
-     * @param filter the name of the filtering scheme
+     * @param filter     the name of the filtering scheme
      */
     default Constraint allDiffPrec(IntVar[] variables, boolean[][] precedence, String filter) {
         return new Constraint(
-            ConstraintsName.ALLDIFFPREC,
-            new PropAllDiffPrec(variables, precedence, filter)
-        );
+                ConstraintsName.ALLDIFFPREC,
+                new PropAllDiffPrec(variables, precedence, filter));
     }
 
     /**
-     * Creates an AllDiffPrec constraint. The precedence matrix is built as following:
-     * with n = |variables|, for all i,j in [0,n-1], precedence[i][j] = true iff precedence[j][i] = false iff variables[i] precedes variables[j].
+     * Creates an AllDiffPrec constraint. The precedence matrix is built as
+     * following:
+     * with n = |variables|, for all i,j in [0,n-1], precedence[i][j] = true iff
+     * precedence[j][i] = false iff variables[i] precedes variables[j].
      *
      * @param variables  the variables
      * @param precedence the precedence matrix
@@ -855,8 +890,10 @@ public interface IIntConstraintFactory extends ISelf<Model> {
 
     /**
      * Creates an among constraint.
-     * nbVar is the number of variables of the collection vars that take their value in values.
-     * <br/><a href="http://www.emn.fr/x-info/sdemasse/gccat/Camong.html">gccat among</a>
+     * nbVar is the number of variables of the collection vars that take their value
+     * in values.
+     * <br/>
+     * <a href="http://www.emn.fr/x-info/sdemasse/gccat/Camong.html">gccat among</a>
      * <br/>
      * Propagator :
      * C. Bessiere, E. Hebrard, B. Hnich, Z. Kiziltan, T. Walsh,
@@ -869,15 +906,17 @@ public interface IIntConstraintFactory extends ISelf<Model> {
      */
     default Constraint among(IntVar nbVar, IntVar[] vars, int[] values) {
         int[] vls = new TIntHashSet(values).toArray(); // remove double occurrences
-        Arrays.sort(vls);                              // sort
+        Arrays.sort(vls); // sort
         return new Constraint(ConstraintsName.AMONG, new PropAmongGAC(ArrayUtils.concat(vars, nbVar), vls));
     }
 
     /**
-     * Creates an and constraint that is satisfied if all boolean variables in <i>bools</i> are true
+     * Creates an and constraint that is satisfied if all boolean variables in
+     * <i>bools</i> are true
      *
      * @param bools an array of boolean variable
-     * @return a constraint and ensuring that variables in <i>bools</i> are all set to true
+     * @return a constraint and ensuring that variables in <i>bools</i> are all set
+     *         to true
      */
     default Constraint and(BoolVar... bools) {
         Model s = bools[0].getModel();
@@ -887,11 +926,14 @@ public interface IIntConstraintFactory extends ISelf<Model> {
     }
 
     /**
-     * Creates an and constraint that is satisfied if all constraints in <i>cstrs</i> are satisfied
-     * BEWARE: this should not be used to post several constraints at once but in a reification context
+     * Creates an and constraint that is satisfied if all constraints in
+     * <i>cstrs</i> are satisfied
+     * BEWARE: this should not be used to post several constraints at once but in a
+     * reification context
      *
      * @param cstrs an array of constraints
-     * @return a constraint and ensuring that all constraints in <i>cstrs</i> are satisfied
+     * @return a constraint and ensuring that all constraints in <i>cstrs</i> are
+     *         satisfied
      */
     default Constraint and(Constraint... cstrs) {
         BoolVar[] bools = new BoolVar[cstrs.length];
@@ -903,7 +945,8 @@ public interface IIntConstraintFactory extends ISelf<Model> {
 
     /**
      * Creates an atLeastNValue constraint.
-     * Let N be the number of distinct values assigned to the variables of the vars collection.
+     * Let N be the number of distinct values assigned to the variables of the vars
+     * collection.
      * Enforce condition N >= nValues to hold.
      * <p>
      * This embeds a light propagator by default.
@@ -911,7 +954,8 @@ public interface IIntConstraintFactory extends ISelf<Model> {
      *
      * @param vars    collection of variables
      * @param nValues limit variable
-     * @param AC      additional filtering algorithm, domain filtering algorithm derivated from (Soft)AllDifferent
+     * @param AC      additional filtering algorithm, domain filtering algorithm
+     *                derivated from (Soft)AllDifferent
      */
     default Constraint atLeastNValues(IntVar[] vars, IntVar nValues, boolean AC) {
         int[] vals = getDomainUnion(vars);
@@ -925,7 +969,8 @@ public interface IIntConstraintFactory extends ISelf<Model> {
 
     /**
      * Creates an atMostNValue constraint.
-     * Let N be the number of distinct values assigned to the variables of the vars collection.
+     * Let N be the number of distinct values assigned to the variables of the vars
+     * collection.
      * Enforce condition N <= nValues to hold.
      * <p>
      * This embeds a light propagator by default.
@@ -933,16 +978,18 @@ public interface IIntConstraintFactory extends ISelf<Model> {
      *
      * @param vars    collection of variables
      * @param nValues limit variable
-     * @param STRONG  "AMNV<Gci|MDRk|R13>" Filters the conjunction of AtMostNValue and disequalities
+     * @param STRONG  "AMNV<Gci|MDRk|R13>" Filters the conjunction of AtMostNValue
+     *                and disequalities
      *                (see Fages and Lap&egrave;gue Artificial Intelligence 2014)
-     *                automatically detects disequalities and allDifferent constraints.
+     *                automatically detects disequalities and allDifferent
+     *                constraints.
      *                Presumably useful when nValues must be minimized.
      */
     default Constraint atMostNValues(IntVar[] vars, IntVar nValues, boolean STRONG) {
         int[] vals = getDomainUnion(vars);
         if (STRONG) {
             Gci gci = new Gci(vars);
-            R[] rules = new R[]{new R1(), new R3(vars.length, nValues.getModel())};
+            R[] rules = new R[] { new R1(), new R3(vars.length, nValues.getModel()) };
             return new Constraint(ConstraintsName.ATMOSTNVALUES, new PropAtMostNValues(vars, vals, nValues),
                     new PropAMNV(vars, nValues, gci, new MDRk(gci), rules));
         } else {
@@ -954,12 +1001,15 @@ public interface IIntConstraintFactory extends ISelf<Model> {
      * Creates a BinPacking constraint.
      * Bin Packing formulation:
      * forall b in [0,binLoad.length-1],
-     * binLoad[b]=sum(itemSize[i] | i in [0,itemSize.length-1], itemBin[i] = b+offset
-     * forall i in [0,itemSize.length-1], itemBin is in [offset,binLoad.length-1+offset],
+     * binLoad[b]=sum(itemSize[i] | i in [0,itemSize.length-1], itemBin[i] =
+     * b+offset
+     * forall i in [0,itemSize.length-1], itemBin is in
+     * [offset,binLoad.length-1+offset],
      *
      * @param itemBin  IntVar representing the bin of each item
      * @param itemSize int representing the size of each item
-     * @param binLoad  IntVar representing the load of each bin (i.e. the sum of the size of the items in it)
+     * @param binLoad  IntVar representing the load of each bin (i.e. the sum of the
+     *                 size of the items in it)
      * @param offset   0 by default but typically 1 if used within MiniZinc
      *                 (which counts from 1 to n instead of from 0 to n-1)
      */
@@ -990,13 +1040,14 @@ public interface IIntConstraintFactory extends ISelf<Model> {
                 ConstraintsName.BINPACKING,
                 new Constraint(ConstraintsName.BINPACKING, new PropBinPacking(itemBin, itemSize, binLoad, offset)),
                 model.sum(binLoad, "=", sum),
-                model.allDifferent(list.toArray(new IntVar[0]))
-        );
+                model.allDifferent(list.toArray(new IntVar[0])));
     }
 
     /**
-     * Creates an channeling constraint between an integer variable and a set of boolean variables.
-     * Maps the boolean assignments variables bVars with the standard assignment variable var. <br>
+     * Creates an channeling constraint between an integer variable and a set of
+     * boolean variables.
+     * Maps the boolean assignments variables bVars with the standard assignment
+     * variable var. <br>
      * var = i <-> bVars[i-offset] = 1
      *
      * @param bVars  array of boolean variables
@@ -1011,19 +1062,21 @@ public interface IIntConstraintFactory extends ISelf<Model> {
             IntVar enumV = var.getModel().intVar(var.getName() + "_enumImage", var.getLB(), var.getUB(), false);
             enumV.eq(var).post();
             return new Constraint(ConstraintsName.BOOLCHANNELING,
-                    new PropEnumDomainChanneling(bVars, enumV, offset)
-            );
+                    new PropEnumDomainChanneling(bVars, enumV, offset));
         }
     }
 
     /**
-     * Creates an channeling constraint between an integer variable and a set of bit variables.
-     * Ensures that var = 2<sup>0</sup>*BIT_1 + 2<sup>1</sup>*BIT_2 + ... 2<sup>n-1</sup>*BIT_n.
+     * Creates an channeling constraint between an integer variable and a set of bit
+     * variables.
+     * Ensures that var = 2<sup>0</sup>*BIT_1 + 2<sup>1</sup>*BIT_2 + ...
+     * 2<sup>n-1</sup>*BIT_n.
      * <br/>
      * BIT_1 is related to the first bit of OCTET (2^0),
      * BIT_2 is related to the first bit of OCTET (2^1), etc.
      * <br/>
-     * The upper bound of var is given by 2<sup>n</sup>, where n is the size of the array bits.
+     * The upper bound of var is given by 2<sup>n</sup>, where n is the size of the
+     * array bits.
      *
      * @param bits the array of bits
      * @param var  the numeric value
@@ -1044,14 +1097,16 @@ public interface IIntConstraintFactory extends ISelf<Model> {
                 tuples.add(t);
             }
         }
-        return table(ArrayUtils.append(bits, new IntVar[]{var}), tuples);
+        return table(ArrayUtils.append(bits, new IntVar[] { var }), tuples);
     }
 
     /**
-     * Creates an channeling constraint between an integer variable and a set of clauses.
+     * Creates an channeling constraint between an integer variable and a set of
+     * clauses.
      * Link each value from the domain of var to two boolean variable:
      * one reifies the equality to the i^th value of the variable domain,
-     * the other reifies the less-or-equality to the i^th value of the variable domain.
+     * the other reifies the less-or-equality to the i^th value of the variable
+     * domain.
      * Contract: eVars.lenght == lVars.length == var.getUB() - var.getLB() + 1
      * Contract: var is not a boolean variable
      *
@@ -1065,16 +1120,24 @@ public interface IIntConstraintFactory extends ISelf<Model> {
 
     /**
      * Creates a circuit constraint which ensures that
-     * <p/> the elements of vars define a covering circuit
-     * <p/> where vars[i] = offset+j means that j is the successor of i.
+     * <p/>
+     * the elements of vars define a covering circuit
+     * <p/>
+     * where vars[i] = offset+j means that j is the successor of i.
      * <p>
      * Filtering algorithms:
-     * <p/> subtour elimination : Caseau & Laburthe (ICLP'97)
-     * <p/> allDifferent GAC algorithm: R&eacute;gin (AAAI'94)
-     * <p/> dominator-based filtering: Fages & Lorca (CP'11)
-     * <p/> Strongly Connected Components based filtering (Cambazar & Bourreau JFPC'06 and Fages and Lorca TechReport'12)
+     * <p/>
+     * subtour elimination : Caseau & Laburthe (ICLP'97)
+     * <p/>
+     * allDifferent GAC algorithm: R&eacute;gin (AAAI'94)
+     * <p/>
+     * dominator-based filtering: Fages & Lorca (CP'11)
+     * <p/>
+     * Strongly Connected Components based filtering (Cambazar & Bourreau JFPC'06
+     * and Fages and Lorca TechReport'12)
      *
-     * @param vars vector of variables which take their value in [offset,offset+|vars|-1]
+     * @param vars vector of variables which take their value in
+     *             [offset,offset+|vars|-1]
      * @return a circuit constraint
      */
     default Constraint circuit(IntVar[] vars) {
@@ -1083,16 +1146,24 @@ public interface IIntConstraintFactory extends ISelf<Model> {
 
     /**
      * Creates a circuit constraint which ensures that
-     * <p/> the elements of vars define a covering circuit
-     * <p/> where vars[i] = offset+j means that j is the successor of i.
+     * <p/>
+     * the elements of vars define a covering circuit
+     * <p/>
+     * where vars[i] = offset+j means that j is the successor of i.
      * <p>
      * Filtering algorithms:
-     * <p/> subtour elimination : Caseau & Laburthe (ICLP'97)
-     * <p/> allDifferent GAC algorithm: R&eacute;gin (AAAI'94)
-     * <p/> dominator-based filtering: Fages & Lorca (CP'11)
-     * <p/> Strongly Connected Components based filtering (Cambazar & Bourreau JFPC'06 and Fages and Lorca TechReport'12)
+     * <p/>
+     * subtour elimination : Caseau & Laburthe (ICLP'97)
+     * <p/>
+     * allDifferent GAC algorithm: R&eacute;gin (AAAI'94)
+     * <p/>
+     * dominator-based filtering: Fages & Lorca (CP'11)
+     * <p/>
+     * Strongly Connected Components based filtering (Cambazar & Bourreau JFPC'06
+     * and Fages and Lorca TechReport'12)
      *
-     * @param vars   vector of variables which take their value in [offset,offset+|vars|-1]
+     * @param vars   vector of variables which take their value in
+     *               [offset,offset+|vars|-1]
      * @param offset 0 by default but typically 1 if used within MiniZinc
      *               (which counts from 1 to n instead of from 0 to n-1)
      * @return a circuit constraint
@@ -1103,17 +1174,26 @@ public interface IIntConstraintFactory extends ISelf<Model> {
 
     /**
      * Creates a circuit constraint which ensures that
-     * <p/> the elements of vars define a covering circuit
-     * <p/> where vars[i] = offset+j means that j is the successor of i.
+     * <p/>
+     * the elements of vars define a covering circuit
+     * <p/>
+     * where vars[i] = offset+j means that j is the successor of i.
      * <p>
      * Filtering algorithms:
-     * <p/> subtour elimination : Caseau & Laburthe (ICLP'97)
-     * <p/> allDifferent GAC algorithm: R&eacute;gin (AAAI'94)
-     * <p/> dominator-based filtering: Fages & Lorca (CP'11)
-     * <p/> Strongly Connected Components based filtering (Cambazard & Bourreau JFPC'06 and Fages and Lorca TechReport'12)
-     * <p/> See Fages PhD Thesis (2014) for more information
+     * <p/>
+     * subtour elimination : Caseau & Laburthe (ICLP'97)
+     * <p/>
+     * allDifferent GAC algorithm: R&eacute;gin (AAAI'94)
+     * <p/>
+     * dominator-based filtering: Fages & Lorca (CP'11)
+     * <p/>
+     * Strongly Connected Components based filtering (Cambazard & Bourreau JFPC'06
+     * and Fages and Lorca TechReport'12)
+     * <p/>
+     * See Fages PhD Thesis (2014) for more information
      *
-     * @param vars   vector of variables which take their value in [offset,offset+|vars|-1]
+     * @param vars   vector of variables which take their value in
+     *               [offset,offset+|vars|-1]
      * @param offset 0 by default but typically 1 if used within MiniZinc
      *               (which counts from 1 to n instead of from 0 to n-1)
      * @param conf   filtering options
@@ -1122,9 +1202,9 @@ public interface IIntConstraintFactory extends ISelf<Model> {
     default Constraint circuit(IntVar[] vars, int offset, CircuitConf conf) {
         Propagator<?>[] props;
         if (conf == CircuitConf.LIGHT) {
-            props = new Propagator[]{new PropNoSubtour(vars, offset)};
+            props = new Propagator[] { new PropNoSubtour(vars, offset) };
         } else {
-            props = new Propagator[]{
+            props = new Propagator[] {
                     new PropNoSubtour(vars, offset),
                     new PropCircuit_ArboFiltering(vars, offset, conf),
                     new PropCircuit_AntiArboFiltering(vars, offset, conf),
@@ -1138,15 +1218,20 @@ public interface IIntConstraintFactory extends ISelf<Model> {
 
     /**
      * Creates a regular constraint that supports a cost function.
-     * Ensures that the assignment of a sequence of variables is recognized by costAutomaton, a deterministic finite automaton,
-     * and that the sum of the costs associated to each assignment is bounded by the cost variable.
-     * This version allows to specify different costs according to the automaton state at which the assignment occurs
+     * Ensures that the assignment of a sequence of variables is recognized by
+     * costAutomaton, a deterministic finite automaton,
+     * and that the sum of the costs associated to each assignment is bounded by the
+     * cost variable.
+     * This version allows to specify different costs according to the automaton
+     * state at which the assignment occurs
      * (i.e. the transition starts)
      *
      * @param vars          sequence of variables
      * @param cost          cost variable
-     * @param costAutomaton a deterministic finite automaton defining the regular language and the costs
-     *                      Can be built with method CostAutomaton.makeSingleResource(...)
+     * @param costAutomaton a deterministic finite automaton defining the regular
+     *                      language and the costs
+     *                      Can be built with method
+     *                      CostAutomaton.makeSingleResource(...)
      */
     default Constraint costRegular(IntVar[] vars, IntVar cost, ICostAutomaton costAutomaton) {
         return new CostRegular(vars, cost, costAutomaton);
@@ -1154,7 +1239,8 @@ public interface IIntConstraintFactory extends ISelf<Model> {
 
     /**
      * Creates a count constraint.
-     * Let N be the number of variables of the vars collection assigned to value value;
+     * Let N be the number of variables of the vars collection assigned to value
+     * value;
      * Enforce condition N = limit to hold.
      * <p>
      *
@@ -1168,7 +1254,8 @@ public interface IIntConstraintFactory extends ISelf<Model> {
 
     /**
      * Creates a count constraint.
-     * Let N be the number of variables of the vars collection assigned to value value;
+     * Let N be the number of variables of the vars collection assigned to value
+     * value;
      * Enforce condition N = limit to hold.
      * <p>
      *
@@ -1199,7 +1286,8 @@ public interface IIntConstraintFactory extends ISelf<Model> {
      * Discards tasks whose duration or height is equal to zero
      *
      * @param tasks    Task objects containing start, duration and end variables
-     * @param heights  integer variables representing the resource consumption of each task
+     * @param heights  integer variables representing the resource consumption of
+     *                 each task
      * @param capacity integer variable representing the resource capacity
      * @return a cumulative constraint
      */
@@ -1216,7 +1304,8 @@ public interface IIntConstraintFactory extends ISelf<Model> {
      * Discards tasks whose duration or height is equal to zero
      *
      * @param tasks       Task objects containing start, duration and end variables
-     * @param heights     integer variables representing the resource consumption of each task
+     * @param heights     integer variables representing the resource consumption of
+     *                    each task
      * @param capacity    integer variable representing the resource capacity
      * @param incremental specifies if an incremental propagation should be applied
      * @return a cumulative constraint
@@ -1234,14 +1323,17 @@ public interface IIntConstraintFactory extends ISelf<Model> {
      * Discards tasks whose duration or height is equal to zero
      *
      * @param tasks       Task objects containing start, duration and end variables
-     * @param heights     integer variables representing the resource consumption of each task
+     * @param heights     integer variables representing the resource consumption of
+     *                    each task
      * @param capacity    integer variable representing the resource capacity
      * @param incremental specifies if an incremental propagation should be applied
      * @param filters     specifies which filtering algorithms to apply
      * @return a cumulative constraint
      */
-    default Constraint cumulative(Task[] tasks, IntVar[] heights, IntVar capacity, boolean incremental, Cumulative.Filter... filters) {
-        return cumulative(tasks, heights, capacity, incremental, Arrays.stream(filters).map(f -> f.make(tasks.length)).toArray(CumulFilter[]::new));
+    default Constraint cumulative(Task[] tasks, IntVar[] heights, IntVar capacity, boolean incremental,
+            Cumulative.Filter... filters) {
+        return cumulative(tasks, heights, capacity, incremental,
+                Arrays.stream(filters).map(f -> f.make(tasks.length)).toArray(CumulFilter[]::new));
     }
 
     /**
@@ -1253,13 +1345,15 @@ public interface IIntConstraintFactory extends ISelf<Model> {
      * Discards tasks whose duration or height is equal to zero
      *
      * @param tasks       Task objects containing start, duration and end variables
-     * @param heights     integer variables representing the resource consumption of each task
+     * @param heights     integer variables representing the resource consumption of
+     *                    each task
      * @param capacity    integer variable representing the resource capacity
      * @param incremental specifies if an incremental propagation should be applied
      * @param filters     specifies which filtering algorithms to apply
      * @return a cumulative constraint
      */
-    default Constraint cumulative(Task[] tasks, IntVar[] heights, IntVar capacity, boolean incremental, CumulFilter... filters) {
+    default Constraint cumulative(Task[] tasks, IntVar[] heights, IntVar capacity, boolean incremental,
+            CumulFilter... filters) {
         if (tasks.length != heights.length) {
             throw new SolverException("Tasks and heights arrays should have same size");
         }
@@ -1271,7 +1365,8 @@ public interface IIntConstraintFactory extends ISelf<Model> {
         }
         // remove tasks that have no impact on resource consumption
         if (nbUseFull < tasks.length) {
-            if (nbUseFull == 0) return arithm(capacity, ">=", 0);
+            if (nbUseFull == 0)
+                return arithm(capacity, ">=", 0);
             Task[] T2 = new Task[nbUseFull];
             IntVar[] H2 = new IntVar[nbUseFull];
             int idx = 0;
@@ -1321,22 +1416,26 @@ public interface IIntConstraintFactory extends ISelf<Model> {
     }
 
     /**
-     * Creates a diffN constraint. Constrains each rectangle<sub>i</sub>, given by their origins X<sub>i</sub>,Y<sub>i</sub>
+     * Creates a diffN constraint. Constrains each rectangle<sub>i</sub>, given by
+     * their origins X<sub>i</sub>,Y<sub>i</sub>
      * and sizes width<sub>i</sub>,height<sub>i</sub>, to be non-overlapping.
      *
      * @param X                      collection of coordinates in first dimension
      * @param Y                      collection of coordinates in second dimension
-     * @param width                  collection of width (each duration should be > 0)
-     * @param height                 collection of height (each height should be >= 0)
-     * @param addCumulativeReasoning indicates whether or not redundant cumulative constraints should be put on each dimension (advised)
+     * @param width                  collection of width (each duration should be >
+     *                               0)
+     * @param height                 collection of height (each height should be >=
+     *                               0)
+     * @param addCumulativeReasoning indicates whether or not redundant cumulative
+     *                               constraints should be put on each dimension
+     *                               (advised)
      * @return a non-overlapping constraint
      */
     default Constraint diffN(IntVar[] X, IntVar[] Y, IntVar[] width, IntVar[] height, boolean addCumulativeReasoning) {
         Model model = X[0].getModel();
         Constraint diffNCons = new Constraint(
                 ConstraintsName.DIFFN,
-                new PropDiffN(X, Y, width, height)
-        );
+                new PropDiffN(X, Y, width, height));
         if (addCumulativeReasoning) {
             IntVar[] EX = new IntVar[X.length];
             IntVar[] EY = new IntVar[X.length];
@@ -1347,8 +1446,10 @@ public interface IIntConstraintFactory extends ISelf<Model> {
             int miny = Integer.MAX_VALUE / 2;
             int maxy = Integer.MIN_VALUE / 2;
             for (int i = 0; i < X.length; i++) {
-                EX[i] = model.intVar(model.generateName("diffN_"), X[i].getLB() + width[i].getLB(), X[i].getUB() + width[i].getUB(), true);
-                EY[i] = model.intVar(model.generateName("diffN_"), Y[i].getLB() + height[i].getLB(), Y[i].getUB() + height[i].getUB(), true);
+                EX[i] = model.intVar(model.generateName("diffN_"), X[i].getLB() + width[i].getLB(),
+                        X[i].getUB() + width[i].getUB(), true);
+                EY[i] = model.intVar(model.generateName("diffN_"), Y[i].getLB() + height[i].getLB(),
+                        Y[i].getUB() + height[i].getUB(), true);
                 TX[i] = new Task(X[i], width[i], EX[i]);
                 TY[i] = new Task(Y[i], height[i], EY[i]);
                 minx = Math.min(minx, X[i].getLB());
@@ -1364,11 +1465,10 @@ public interface IIntConstraintFactory extends ISelf<Model> {
             IntVar diffY = model.intVar(model.generateName("diffN_"), 0, maxy - miny, true);
             return Constraint.merge(ConstraintsName.DIFFNWITHCUMULATIVE,
                     diffNCons,
-                    min(minX, X), max(maxX, EX), scalar(new IntVar[]{maxX, minX}, new int[]{1, -1}, "=", diffX),
+                    min(minX, X), max(maxX, EX), scalar(new IntVar[] { maxX, minX }, new int[] { 1, -1 }, "=", diffX),
                     cumulative(TX, height, diffY),
-                    min(minY, Y), max(maxY, EY), scalar(new IntVar[]{maxY, minY}, new int[]{1, -1}, "=", diffY),
-                    cumulative(TY, width, diffX)
-            );
+                    min(minY, Y), max(maxY, EY), scalar(new IntVar[] { maxY, minY }, new int[] { 1, -1 }, "=", diffY),
+                    cumulative(TY, width, diffX));
         } else {
             return diffNCons;
         }
@@ -1396,7 +1496,8 @@ public interface IIntConstraintFactory extends ISelf<Model> {
 
     /**
      * Creates a global cardinality constraint (GCC):
-     * Each value values[i] should be taken by exactly occurrences[i] variables of vars.
+     * Each value values[i] should be taken by exactly occurrences[i] variables of
+     * vars.
      * <br/>
      * This constraint does not ensure any well-defined level of consistency, yet.
      *
@@ -1468,8 +1569,10 @@ public interface IIntConstraintFactory extends ISelf<Model> {
      * <p>
      * Beware you should have |vars1| = |vars2|
      *
-     * @param vars1   vector of variables which take their value in [offset1,offset1+|vars2|-1]
-     * @param vars2   vector of variables which take their value in [offset2,offset2+|vars1|-1]
+     * @param vars1   vector of variables which take their value in
+     *                [offset1,offset1+|vars2|-1]
+     * @param vars2   vector of variables which take their value in
+     *                [offset2,offset2+|vars1|-1]
      * @param offset1 lowest value in vars1 (most often 0)
      * @param offset2 lowest value in vars2 (most often 0)
      */
@@ -1486,15 +1589,19 @@ public interface IIntConstraintFactory extends ISelf<Model> {
      * <p>
      * Beware you should have |vars1| = |vars2|
      *
-     * @param vars1   vector of variables which take their value in [offset1,offset1+|vars2|-1]
-     * @param vars2   vector of variables which take their value in [offset2,offset2+|vars1|-1]
+     * @param vars1   vector of variables which take their value in
+     *                [offset1,offset1+|vars2|-1]
+     * @param vars2   vector of variables which take their value in
+     *                [offset2,offset2+|vars1|-1]
      * @param offset1 lowest value in vars1 (most often 0)
      * @param offset2 lowest value in vars2 (most often 0)
-     * @param ac      use AC level for embedded alldifferent, if false, domains are scanned
+     * @param ac      use AC level for embedded alldifferent, if false, domains are
+     *                scanned
      */
     default Constraint inverseChanneling(IntVar[] vars1, IntVar[] vars2, int offset1, int offset2, boolean ac) {
         if (vars1.length != vars2.length)
-            throw new SolverException(Arrays.toString(vars1) + " and " + Arrays.toString(vars2) + " should have same size");
+            throw new SolverException(
+                    Arrays.toString(vars1) + " and " + Arrays.toString(vars2) + " should have same size");
         boolean allEnum = true;
         for (int i = 0; i < vars1.length && allEnum; i++) {
             if (!(vars1[i].hasEnumeratedDomain() && vars2[i].hasEnumeratedDomain())) {
@@ -1513,13 +1620,13 @@ public interface IIntConstraintFactory extends ISelf<Model> {
         return new Constraint(ConstraintsName.INVERSECHANNELING, ArrayUtils.append(
                 alldiff1.getPropagators(),
                 alldiff2.getPropagators(),
-                new Propagator[]{ip}
-        ));
+                new Propagator[] { ip }));
     }
 
     /**
      * Creates an intValuePrecedeChain constraint.
-     * Ensure that if there exists <code>j</code> such that X[j] = T, then, there must exist <code>i</code> < <code>j</code> such that
+     * Ensure that if there exists <code>j</code> such that X[j] = T, then, there
+     * must exist <code>i</code> < <code>j</code> such that
      * X[i] = S.
      *
      * @param X an array of variables
@@ -1533,7 +1640,8 @@ public interface IIntConstraintFactory extends ISelf<Model> {
     /**
      * Creates an intValuePrecedeChain constraint.
      * Ensure that, for each pair of V[k] and V[l] of values in V, such that k < l,
-     * if there exists <code>j</code> such that X[j] = V[l], then, there must exist <code>i</code> < <code>j</code> such that
+     * if there exists <code>j</code> such that X[j] = V[l], then, there must exist
+     * <code>i</code> < <code>j</code> such that
      * X[i] = V[k].
      *
      * @param X array of variables
@@ -1560,19 +1668,26 @@ public interface IIntConstraintFactory extends ISelf<Model> {
     /**
      * Creates a knapsack constraint.
      * Ensures that :
-     * <br/>- occurrences[i] * weight[i] = weightSum
-     * <br/>- occurrences[i] * energy[i] = energySum
-     * <br/>and maximizing the value of energySum.
+     * <br/>
+     * - occurrences[i] * weight[i] = weightSum
+     * <br/>
+     * - occurrences[i] * energy[i] = energySum
+     * <br/>
+     * and maximizing the value of energySum.
      * <p>
      * <p>
      * A knapsack constraint
      * <a href="http://en.wikipedia.org/wiki/Knapsack_problem">wikipedia</a>:<br/>
      * "Given a set of items, each with a weight and an energy value,
      * determine the count of each item to include in a collection so that
-     * the total weight is less than or equal to a given limit and the total value is as large as possible.
-     * It derives its name from the problem faced by someone who is constrained by a fixed-size knapsack
+     * the total weight is less than or equal to a given limit and the total value
+     * is as large as possible.
+     * It derives its name from the problem faced by someone who is constrained by a
+     * fixed-size knapsack
      * and must fill it with the most useful items."
-     * The limit over weightSum has to be specified either in its domain or with an additional constraint:
+     * The limit over weightSum has to be specified either in its domain or with an
+     * additional constraint:
+     * 
      * <pre>
      *     model.post(solver.arithm(weightSum, "<=", limit);
      * </pre>
@@ -1584,7 +1699,7 @@ public interface IIntConstraintFactory extends ISelf<Model> {
      * @param energy      energy of each item (must be >=0)
      */
     default Constraint knapsack(IntVar[] occurrences, IntVar weightSum, IntVar energySum,
-                                int[] weight, int[] energy) {
+            int[] weight, int[] energy) {
         Constraint scalar1 = scalar(occurrences, weight, "=", weightSum);
         scalar1.ignore();
         Constraint scalar2 = scalar(occurrences, energy, "=", energySum);
@@ -1592,15 +1707,18 @@ public interface IIntConstraintFactory extends ISelf<Model> {
         return new Constraint(ConstraintsName.KNAPSACK, ArrayUtils.append(
                 scalar1.propagators,
                 scalar2.propagators,
-                new Propagator[]{new PropKnapsackKatriel(occurrences, weightSum, energySum, weight, energy)}
-        ));
+                new Propagator[] { new PropKnapsackKatriel(occurrences, weightSum, energySum, weight, energy) }));
     }
 
     /**
-     * Creates a keySort constraint which ensures that the variables of SORTEDvars correspond to the variables
-     * of vars according to a permutation stored in PERMvars (optional, can be null).
-     * The variables of SORTEDvars are also sorted in increasing order wrt to K-size tuples.
-     * The sort is stable, that is, ties are broken using the position of the tuple in vars.
+     * Creates a keySort constraint which ensures that the variables of SORTEDvars
+     * correspond to the variables
+     * of vars according to a permutation stored in PERMvars (optional, can be
+     * null).
+     * The variables of SORTEDvars are also sorted in increasing order wrt to K-size
+     * tuples.
+     * The sort is stable, that is, ties are broken using the position of the tuple
+     * in vars.
      * <p>
      * <p>
      * For example:<br/>
@@ -1610,9 +1728,11 @@ public interface IIntConstraintFactory extends ISelf<Model> {
      * - K = 2<br/>
      *
      * @param vars       a tuple of array of variables
-     * @param PERMvars   array of permutation variables, domains should be [1,vars.length]  -- Can be null
+     * @param PERMvars   array of permutation variables, domains should be
+     *                   [1,vars.length] -- Can be null
      * @param SORTEDvars a tuple of array of variables sorted in increasing order
-     * @param K          key prefix size (0 &le; k &le; m, where m is the size of the array of variable)
+     * @param K          key prefix size (0 &le; k &le; m, where m is the size of
+     *                   the array of variable)
      * @return a keySort constraint
      */
     default Constraint keySort(IntVar[][] vars, IntVar[] PERMvars, IntVar[][] SORTEDvars, int K) {
@@ -1628,8 +1748,10 @@ public interface IIntConstraintFactory extends ISelf<Model> {
 
     /**
      * Creates a lexChainLess constraint.
-     * For each pair of consecutive vectors vars<sub>i</sub> and vars<sub>i+1</sub> of the vars collection
-     * vars<sub>i</sub> is lexicographically strictly less than than vars<sub>i+1</sub>
+     * For each pair of consecutive vectors vars<sub>i</sub> and vars<sub>i+1</sub>
+     * of the vars collection
+     * vars<sub>i</sub> is lexicographically strictly less than than
+     * vars<sub>i+1</sub>
      *
      * @param vars collection of vectors of variables
      */
@@ -1639,8 +1761,10 @@ public interface IIntConstraintFactory extends ISelf<Model> {
 
     /**
      * Creates a lexChainLessEq constraint.
-     * For each pair of consecutive vectors vars<sub>i</sub> and vars<sub>i+1</sub> of the vars collection
-     * vars<sub>i</sub> is lexicographically less or equal than than vars<sub>i+1</sub>
+     * For each pair of consecutive vectors vars<sub>i</sub> and vars<sub>i+1</sub>
+     * of the vars collection
+     * vars<sub>i</sub> is lexicographically less or equal than than
+     * vars<sub>i+1</sub>
      *
      * @param vars collection of vectors of variables
      */
@@ -1678,7 +1802,8 @@ public interface IIntConstraintFactory extends ISelf<Model> {
 
     /**
      * Creates an Argmax constraint.
-     * z is the index of the maximum value of the collection of domain variables vars.
+     * z is the index of the maximum value of the collection of domain variables
+     * vars.
      *
      * @param z      a variable
      * @param offset offset wrt to 'z'
@@ -1690,10 +1815,13 @@ public interface IIntConstraintFactory extends ISelf<Model> {
 
     /**
      * Creates an Argmin constraint.
-     * z is the index of the minimum value of the collection of domain variables vars.
-     * @implNote This introduces {@link org.chocosolver.solver.variables.view.integer.IntMinusView}[]
-     * and returns an {@link #argmax(IntVar, int, IntVar[])} constraint
-     * on this views.
+     * z is the index of the minimum value of the collection of domain variables
+     * vars.
+     * 
+     * @implNote This introduces
+     *           {@link org.chocosolver.solver.variables.view.integer.IntMinusView}[]
+     *           and returns an {@link #argmax(IntVar, int, IntVar[])} constraint
+     *           on this views.
      *
      * @param z      a variable
      * @param offset offset wrt to 'z'
@@ -1739,7 +1867,8 @@ public interface IIntConstraintFactory extends ISelf<Model> {
     }
 
     /**
-     * Create a constraint where solutions (tuples) are encoded by a multi-valued decision diagram.
+     * Create a constraint where solutions (tuples) are encoded by a multi-valued
+     * decision diagram.
      * The order of the variables in vars is important and must refer to the MDD.
      *
      * @param vars the array of variables
@@ -1785,16 +1914,21 @@ public interface IIntConstraintFactory extends ISelf<Model> {
 
     /**
      * Creates a regular constraint that supports a multiple cost function.
-     * Ensures that the assignment of a sequence of vars is recognized by costAutomaton, a deterministic finite automaton,
-     * and that the sum of the cost vector associated to each assignment is bounded by the variable vector costVars.
-     * This version allows to specify different costs according to the automaton state at which the assignment occurs
+     * Ensures that the assignment of a sequence of vars is recognized by
+     * costAutomaton, a deterministic finite automaton,
+     * and that the sum of the cost vector associated to each assignment is bounded
+     * by the variable vector costVars.
+     * This version allows to specify different costs according to the automaton
+     * state at which the assignment occurs
      * (i.e. the transition starts).
      * The precision is set to {@code 1e-4d}.
      *
      * @param vars          sequence of variables
      * @param costVars      cost variables
-     * @param costAutomaton a deterministic finite automaton defining the regular language and the costs
-     *                      Can be built from method CostAutomaton.makeMultiResources(...)
+     * @param costAutomaton a deterministic finite automaton defining the regular
+     *                      language and the costs
+     *                      Can be built from method
+     *                      CostAutomaton.makeMultiResources(...)
      */
     default Constraint multiCostRegular(IntVar[] vars, IntVar[] costVars, ICostAutomaton costAutomaton) {
         return multiCostRegular(vars, costVars, costAutomaton, 1e-4d);
@@ -1802,26 +1936,32 @@ public interface IIntConstraintFactory extends ISelf<Model> {
 
     /**
      * Creates a regular constraint that supports a multiple cost function.
-     * Ensures that the assignment of a sequence of vars is recognized by costAutomaton, a deterministic finite automaton,
-     * and that the sum of the cost vector associated to each assignment is bounded by the variable vector costVars.
-     * This version allows to specify different costs according to the automaton state at which the assignment occurs
+     * Ensures that the assignment of a sequence of vars is recognized by
+     * costAutomaton, a deterministic finite automaton,
+     * and that the sum of the cost vector associated to each assignment is bounded
+     * by the variable vector costVars.
+     * This version allows to specify different costs according to the automaton
+     * state at which the assignment occurs
      * (i.e. the transition starts)
      *
      * @param vars          sequence of variables
      * @param costVars      cost variables
-     * @param costAutomaton a deterministic finite automaton defining the regular language and the costs
-     *                      Can be built from method CostAutomaton.makeMultiResources(...)
+     * @param costAutomaton a deterministic finite automaton defining the regular
+     *                      language and the costs
+     *                      Can be built from method
+     *                      CostAutomaton.makeMultiResources(...)
      * @param precision     the smallest used double for MCR algorithm
      */
     default Constraint multiCostRegular(IntVar[] vars, IntVar[] costVars,
-                                        ICostAutomaton costAutomaton, double precision) {
+            ICostAutomaton costAutomaton, double precision) {
         return new Constraint(ConstraintsName.MULTICOSTREGULAR,
                 new PropMultiCostRegular(vars, costVars, costAutomaton, precision));
     }
 
     /**
      * Creates an nValue constraint.
-     * Let N be the number of distinct values assigned to the variables of the vars collection.
+     * Let N be the number of distinct values assigned to the variables of the vars
+     * collection.
      * Enforce condition N = nValues to hold.
      * <p>
      * This embeds a light propagator by default.
@@ -1835,23 +1975,24 @@ public interface IIntConstraintFactory extends ISelf<Model> {
      */
     default Constraint nValues(IntVar[] vars, IntVar nValues) {
         Gci gci = new Gci(vars);
-        R[] rules = new R[]{new R1(), new R3(vars.length, nValues.getModel())};
+        R[] rules = new R[] { new R1(), new R3(vars.length, nValues.getModel()) };
         return new Constraint(
-            ConstraintsName.NVALUES,
-            new PropNValue(vars, nValues),
-            // at least
-//            new PropAtLeastNValues(vars, vals, nValues),
-            // at most
-//            new PropAtMostNValues(vars, vals, nValues),
-            new PropAMNV(vars, nValues, gci, new MDRk(gci), rules)
-        );
+                ConstraintsName.NVALUES,
+                new PropNValue(vars, nValues),
+                // at least
+                // new PropAtLeastNValues(vars, vals, nValues),
+                // at most
+                // new PropAtMostNValues(vars, vals, nValues),
+                new PropAMNV(vars, nValues, gci, new MDRk(gci), rules));
     }
 
     /**
-     * Creates an or constraint that is satisfied if at least one boolean variables in <i>bools</i> is true
+     * Creates an or constraint that is satisfied if at least one boolean variables
+     * in <i>bools</i> is true
      *
      * @param bools an array of boolean variable
-     * @return a constraint that is satisfied if at least one boolean variables in <i>bools</i> is true
+     * @return a constraint that is satisfied if at least one boolean variables in
+     *         <i>bools</i> is true
      */
     default Constraint or(BoolVar... bools) {
         Model s = bools[0].getModel();
@@ -1861,10 +2002,12 @@ public interface IIntConstraintFactory extends ISelf<Model> {
     }
 
     /**
-     * Creates an or constraint that is satisfied if at least one constraint in <i>cstrs</i> are satisfied
+     * Creates an or constraint that is satisfied if at least one constraint in
+     * <i>cstrs</i> are satisfied
      *
      * @param cstrs an array of constraints
-     * @return a constraint and ensuring that at least one constraint in <i>cstrs</i> are satisfied
+     * @return a constraint and ensuring that at least one constraint in
+     *         <i>cstrs</i> are satisfied
      */
     default Constraint or(Constraint... cstrs) {
         BoolVar[] bools = new BoolVar[cstrs.length];
@@ -1876,10 +2019,14 @@ public interface IIntConstraintFactory extends ISelf<Model> {
 
     /**
      * Creates a path constraint which ensures that
-     * <p/> the elements of vars define a covering path from start to end
-     * <p/> where vars[i] = j means that j is the successor of i.
-     * <p/> Moreover, vars[end] = |vars|
-     * <p/> Requires : |vars|>0
+     * <p/>
+     * the elements of vars define a covering path from start to end
+     * <p/>
+     * where vars[i] = j means that j is the successor of i.
+     * <p/>
+     * Moreover, vars[end] = |vars|
+     * <p/>
+     * Requires : |vars|>0
      * <p>
      * Filtering algorithms: see circuit constraint
      *
@@ -1894,14 +2041,19 @@ public interface IIntConstraintFactory extends ISelf<Model> {
 
     /**
      * Creates a path constraint which ensures that
-     * <p/> the elements of vars define a covering path from start to end
-     * <p/> where vars[i] = offset+j means that j is the successor of i.
-     * <p/> Moreover, vars[end-offset] = |vars|+offset
-     * <p/> Requires : |vars|>0
+     * <p/>
+     * the elements of vars define a covering path from start to end
+     * <p/>
+     * where vars[i] = offset+j means that j is the successor of i.
+     * <p/>
+     * Moreover, vars[end-offset] = |vars|+offset
+     * <p/>
+     * Requires : |vars|>0
      * <p>
      * Filtering algorithms: see circuit constraint
      *
-     * @param vars   vector of variables which take their value in [offset,offset+|vars|]
+     * @param vars   vector of variables which take their value in
+     *               [offset,offset+|vars|]
      * @param start  variable indicating the index of the first variable in the path
      * @param end    variable indicating the index of the last variable in the path
      * @param offset 0 by default but typically 1 if used within MiniZinc
@@ -1917,8 +2069,7 @@ public interface IIntConstraintFactory extends ISelf<Model> {
                 return Constraint.merge(ConstraintsName.PATH,
                         arithm(start, "=", offset),
                         arithm(end, "=", offset),
-                        arithm(vars[0], "=", 1 + offset)
-                );
+                        arithm(vars[0], "=", 1 + offset));
             default:
                 if (start == end) {
                     return start.getModel().falseConstraint();
@@ -1926,8 +2077,7 @@ public interface IIntConstraintFactory extends ISelf<Model> {
                     return Constraint.merge(ConstraintsName.PATH,
                             arithm(start, "!=", end),
                             circuit(ArrayUtils.concat(vars, start), offset),
-                            element(end.getModel().intVar(vars.length + offset), vars, end, offset)
-                    );
+                            element(end.getModel().intVar(vars.length + offset), vars, end, offset));
                 }
         }
     }
@@ -1940,14 +2090,16 @@ public interface IIntConstraintFactory extends ISelf<Model> {
      * The same dfa can be used for different propagators.
      *
      * @param vars      sequence of variables
-     * @param automaton a deterministic finite automaton defining the regular language
+     * @param automaton a deterministic finite automaton defining the regular
+     *                  language
      */
     default Constraint regular(IntVar[] vars, IAutomaton automaton) {
         return new Constraint(ConstraintsName.REGULAR, new PropRegular(vars, automaton));
     }
 
     /**
-     * Creates a scalar constraint which ensures that Sum(vars[i]*coeffs[i]) operator scalar
+     * Creates a scalar constraint which ensures that Sum(vars[i]*coeffs[i])
+     * operator scalar
      *
      * @param vars     a collection of IntVar
      * @param coeffs   a collection of int, for which |vars|=|coeffs|
@@ -1960,13 +2112,15 @@ public interface IIntConstraintFactory extends ISelf<Model> {
     }
 
     /**
-     * Creates a scalar constraint which ensures that Sum(vars[i]*coeffs[i]) operator scalar
+     * Creates a scalar constraint which ensures that Sum(vars[i]*coeffs[i])
+     * operator scalar
      *
      * @param vars             a collection of IntVar
      * @param coeffs           a collection of int, for which |vars|=|coeffs|
      * @param operator         an operator in {"=", "!=", ">","<",">=","<="}
      * @param scalar           an integer
-     * @param minCardForDecomp minimum number of cardinality threshold to a sum constraint to be decomposed
+     * @param minCardForDecomp minimum number of cardinality threshold to a sum
+     *                         constraint to be decomposed
      * @return a scalar constraint
      */
     default Constraint scalar(IntVar[] vars, int[] coeffs, String operator, int scalar, int minCardForDecomp) {
@@ -1977,7 +2131,8 @@ public interface IIntConstraintFactory extends ISelf<Model> {
     }
 
     /**
-     * Creates a scalar constraint which ensures that Sum(vars[i]*coeffs[i]) operator scalar
+     * Creates a scalar constraint which ensures that Sum(vars[i]*coeffs[i])
+     * operator scalar
      *
      * @param vars     a collection of IntVar
      * @param coeffs   a collection of int, for which |vars|=|coeffs|
@@ -1991,17 +2146,19 @@ public interface IIntConstraintFactory extends ISelf<Model> {
     }
 
     /**
-     * Creates a scalar constraint which ensures that Sum(vars[i]*coeffs[i]) operator scalar
+     * Creates a scalar constraint which ensures that Sum(vars[i]*coeffs[i])
+     * operator scalar
      *
      * @param vars             a collection of IntVar
      * @param coeffs           a collection of int, for which |vars|=|coeffs|
      * @param operator         an operator in {"=", "!=", ">","<",">=","<="}
      * @param scalar           an IntVar
-     * @param minCardForDecomp minimum number of cardinality threshold to a sum constraint to be decomposed
+     * @param minCardForDecomp minimum number of cardinality threshold to a sum
+     *                         constraint to be decomposed
      * @return a scalar constraint
      */
     default Constraint scalar(IntVar[] vars, int[] coeffs, String operator, IntVar scalar,
-                              int minCardForDecomp) {
+            int minCardForDecomp) {
         if (vars.length != coeffs.length) {
             throw new SolverException("vars and coeffs arrays should have same size");
         }
@@ -2009,8 +2166,10 @@ public interface IIntConstraintFactory extends ISelf<Model> {
     }
 
     /**
-     * Creates a sort constraint which ensures that the variables of sortedVars correspond to the variables
-     * of vars according to a permutation. The variables of sortedVars are also sorted in increasing order.
+     * Creates a sort constraint which ensures that the variables of sortedVars
+     * correspond to the variables
+     * of vars according to a permutation. The variables of sortedVars are also
+     * sorted in increasing order.
      * <p>
      * <p>
      * For example:<br/>
@@ -2025,7 +2184,7 @@ public interface IIntConstraintFactory extends ISelf<Model> {
         if (vars.length != sortedVars.length) {
             throw new SolverException("vars and sortedVars arrays should have same size");
         }
-        //        return new Constraint("Sort", new PropSort(vars, sortedVars));
+        // return new Constraint("Sort", new PropSort(vars, sortedVars));
         IntVar[][] X = new IntVar[vars.length][1];
         IntVar[][] Y = new IntVar[sortedVars.length][1];
         for (int i = 0; i < vars.length; i++) {
@@ -2037,15 +2196,24 @@ public interface IIntConstraintFactory extends ISelf<Model> {
 
     /**
      * Creates a subCircuit constraint which ensures that
-     * <p/> the elements of vars define a single circuit of subcircuitSize nodes where
-     * <p/> vars[i] = offset+j means that j is the successor of i.
-     * <p/> and vars[i] = offset+i means that i is not part of the circuit
-     * <p/> the constraint ensures that |{vars[i] =/= offset+i}| = subCircuitLength
+     * <p/>
+     * the elements of vars define a single circuit of subcircuitSize nodes where
+     * <p/>
+     * vars[i] = offset+j means that j is the successor of i.
+     * <p/>
+     * and vars[i] = offset+i means that i is not part of the circuit
+     * <p/>
+     * the constraint ensures that |{vars[i] =/= offset+i}| = subCircuitLength
      * <p>
-     * <p/> Filtering algorithms:
-     * <p/> subtour elimination : Caseau & Laburthe (ICLP'97)
-     * <p/> allDifferent GAC algorithm: R&eacute;gin (AAAI'94)
-     * <p/> dominator-based filtering: Fages & Lorca (CP'11) (adaptive scheme by default, see implementation)
+     * <p/>
+     * Filtering algorithms:
+     * <p/>
+     * subtour elimination : Caseau & Laburthe (ICLP'97)
+     * <p/>
+     * allDifferent GAC algorithm: R&eacute;gin (AAAI'94)
+     * <p/>
+     * dominator-based filtering: Fages & Lorca (CP'11) (adaptive scheme by default,
+     * see implementation)
      *
      * @param vars             a vector of variables
      * @param offset           0 by default but 1 if used within MiniZinc
@@ -2065,27 +2233,33 @@ public interface IIntConstraintFactory extends ISelf<Model> {
                 ArrayUtils.toArray(
                         new PropKLoops(vars, offset, nbLoops),
                         new PropSubcircuit(vars, offset, subCircuitLength),
-                        new PropSubcircuitDominatorFilter(vars, offset, true)
-                )
-        ));
+                        new PropSubcircuitDominatorFilter(vars, offset, true))));
     }
 
     /**
      * Creates a subPath constraint which ensures that
-     * <p/> the elements of vars define a path of SIZE vertices, leading from start to end
-     * <p/> where vars[i] = offset+j means that j is the successor of i.
-     * <p/> where vars[i] = offset+i means that vertex i is excluded from the path.
-     * <p/> Moreover, vars[end-offset] = |vars|+offset
-     * <p/> Requires : |vars|>0
+     * <p/>
+     * the elements of vars define a path of SIZE vertices, leading from start to
+     * end
+     * <p/>
+     * where vars[i] = offset+j means that j is the successor of i.
+     * <p/>
+     * where vars[i] = offset+i means that vertex i is excluded from the path.
+     * <p/>
+     * Moreover, vars[end-offset] = |vars|+offset
+     * <p/>
+     * Requires : |vars|>0
      * <p>
      * Filtering algorithms: see subCircuit constraint
      *
-     * @param vars   vector of variables which take their value in [offset,offset+|vars|]
+     * @param vars   vector of variables which take their value in
+     *               [offset,offset+|vars|]
      * @param start  variable indicating the index of the first variable in the path
      * @param end    variable indicating the index of the last variable in the path
      * @param offset 0 by default but typically 1 if used within MiniZinc
      *               (which counts from 1 to n instead of from 0 to n-1)
-     * @param SIZE   variable indicating the number of variables to belong to the path
+     * @param SIZE   variable indicating the number of variables to belong to the
+     *               path
      * @return a subPath constraint
      */
     default Constraint subPath(IntVar[] vars, IntVar start, IntVar end, int offset, IntVar SIZE) {
@@ -2098,14 +2272,12 @@ public interface IIntConstraintFactory extends ISelf<Model> {
                         arithm(start, "=", offset),
                         arithm(end, "=", offset),
                         arithm(vars[0], "=", 1 + offset),
-                        arithm(SIZE, "=", 1)
-                );
+                        arithm(SIZE, "=", 1));
             default:
                 return Constraint.merge(ConstraintsName.SUBPATH,
                         arithm(start, "<", vars.length + offset),
                         subCircuit(ArrayUtils.concat(vars, start), offset, end.getModel().intOffsetView(SIZE, 1)),
-                        element(end.getModel().intVar(vars.length + offset), vars, end, offset)
-                );
+                        element(end.getModel().intVar(vars.length + offset), vars, end, offset));
         }
     }
 
@@ -2124,18 +2296,20 @@ public interface IIntConstraintFactory extends ISelf<Model> {
 
     /**
      * Creates a sum constraint.
-     * Enforces that &#8721;<sub>x in vars1</sub>x operator &#8721;<sub>y in vars2</sub>y.
+     * Enforces that &#8721;<sub>x in vars1</sub>x operator &#8721;<sub>y in
+     * vars2</sub>y.
      *
-     * @param vars1     a collection of IntVar
+     * @param vars1    a collection of IntVar
      * @param operator operator in {"=", "!=", ">","<",">=","<="}
-     * @param vars2     a collection of IntVar
+     * @param vars2    a collection of IntVar
      * @return a sum constraint
      */
     default Constraint sum(IntVar[] vars1, String operator, IntVar[] vars2) {
-        int[] coeffs = new int[vars1.length+ vars2.length];
+        int[] coeffs = new int[vars1.length + vars2.length];
         Arrays.fill(coeffs, 0, vars1.length, 1);
         Arrays.fill(coeffs, vars1.length, vars1.length + vars2.length, -1);
-        return scalar(ArrayUtils.append(vars1, vars2), coeffs, operator, 0, ref().getSettings().getMinCardForSumDecomposition());
+        return scalar(ArrayUtils.append(vars1, vars2), coeffs, operator, 0,
+                ref().getSettings().getMinCardForSumDecomposition());
     }
 
     /**
@@ -2145,7 +2319,8 @@ public interface IIntConstraintFactory extends ISelf<Model> {
      * @param vars             a collection of IntVar
      * @param operator         operator in {"=", "!=", ">","<",">=","<="}
      * @param sum              an integer
-     * @param minCardForDecomp minimum number of cardinality threshold to a sum constraint to be decomposed
+     * @param minCardForDecomp minimum number of cardinality threshold to a sum
+     *                         constraint to be decomposed
      * @return a sum constraint
      */
     default Constraint sum(IntVar[] vars, String operator, int sum, int minCardForDecomp) {
@@ -2175,7 +2350,8 @@ public interface IIntConstraintFactory extends ISelf<Model> {
      * @param vars             a collection of IntVar
      * @param operator         operator in {"=", "!=", ">","<",">=","<="}
      * @param sum              an IntVar
-     * @param minCardForDecomp minimum number of cardinality threshold to a sum constraint to be decomposed
+     * @param minCardForDecomp minimum number of cardinality threshold to a sum
+     *                         constraint to be decomposed
      * @return a sum constraint
      */
     default Constraint sum(IntVar[] vars, String operator, IntVar sum, int minCardForDecomp) {
@@ -2216,7 +2392,8 @@ public interface IIntConstraintFactory extends ISelf<Model> {
      *
      * @param vars             a vector of boolean variables
      * @param sum              a variable
-     * @param minCardForDecomp minimum number of cardinality threshold to a sum constraint to be decomposed
+     * @param minCardForDecomp minimum number of cardinality threshold to a sum
+     *                         constraint to be decomposed
      */
     default Constraint sum(BoolVar[] vars, String operator, IntVar sum, int minCardForDecomp) {
         if (sum.getModel().getSettings().enableDecompositionOfBooleanSum()) {
@@ -2230,18 +2407,21 @@ public interface IIntConstraintFactory extends ISelf<Model> {
     }
 
     /**
-     * Creates a table constraint specifying that the sequence of variables vars must belong to the list of tuples
+     * Creates a table constraint specifying that the sequence of variables vars
+     * must belong to the list of tuples
      * (or must NOT belong in case of infeasible tuples)
      * <p>
-     * Default configuration with GACSTR+ algorithm for feasible tuples and GAC3rm otherwise
+     * Default configuration with GACSTR+ algorithm for feasible tuples and GAC3rm
+     * otherwise
      *
      * @param vars   variables forming the tuples
-     * @param tuples the relation between the variables (list of allowed/forbidden tuples)
+     * @param tuples the relation between the variables (list of allowed/forbidden
+     *               tuples)
      */
     default Constraint table(IntVar[] vars, Tuples tuples) {
         String algo = "GAC3rm";
         if (tuples.isFeasible()) {
-            //noinspection OptionalGetWithoutIsPresent
+            // noinspection OptionalGetWithoutIsPresent
             if (tuples.nbTuples() > 512 &&
                     (IntStream.range(0, vars.length)
                             .map(i -> tuples.max(i) - tuples.min(i))
@@ -2276,11 +2456,14 @@ public interface IIntConstraintFactory extends ISelf<Model> {
      * <br/>
      * - <b>FC</b>: Forward Checking.
      * <br/>
-     * - <b>MDD+</b>: uses a multi-valued decision diagram for allowed tuples (see mddc constraint),
+     * - <b>MDD+</b>: uses a multi-valued decision diagram for allowed tuples (see
+     * mddc constraint),
      *
      * @param vars   variables forming the tuples
-     * @param tuples the relation between the variables (list of allowed/forbidden tuples). Should not be modified once passed to the constraint.
-     * @param algo   to choose among {"CT+", "GAC3rm", "GAC2001", "GACSTR", "GAC2001+", "GAC3rm+", "FC", "STR2+"}
+     * @param tuples the relation between the variables (list of allowed/forbidden
+     *               tuples). Should not be modified once passed to the constraint.
+     * @param algo   to choose among {"CT+", "GAC3rm", "GAC2001", "GACSTR",
+     *               "GAC2001+", "GAC3rm+", "FC", "STR2+"}
      */
     default Constraint table(IntVar[] vars, Tuples tuples, String algo) {
         if (!tuples.allowUniversalValue() && vars.length == 2) {
@@ -2312,7 +2495,7 @@ public interface IIntConstraintFactory extends ISelf<Model> {
                     p = new PropCompactTable(vars, tuples);
                 }
             }
-            break;
+                break;
             case "MDD+":
                 p = new PropLargeMDDC(new MultivaluedDecisionDiagram(vars, tuples), vars);
                 break;
@@ -2346,11 +2529,15 @@ public interface IIntConstraintFactory extends ISelf<Model> {
     /**
      * Creates a tree constraint.
      * Partition succs variables into nbTrees (anti) arborescences
-     * <p/> succs[i] = j means that j is the successor of i.
-     * <p/> and succs[i] = i means that i is a root
+     * <p/>
+     * succs[i] = j means that j is the successor of i.
+     * <p/>
+     * and succs[i] = i means that i is a root
      * <p>
-     * <p/> dominator-based filtering: Fages & Lorca (CP'11)
-     * <p/> However, the filtering over nbTrees is quite light here
+     * <p/>
+     * dominator-based filtering: Fages & Lorca (CP'11)
+     * <p/>
+     * However, the filtering over nbTrees is quite light here
      *
      * @param succs   successors variables, taking their domain in [0,|succs|-1]
      * @param nbTrees number of arborescences (=number of loops)
@@ -2363,13 +2550,18 @@ public interface IIntConstraintFactory extends ISelf<Model> {
     /**
      * Creates a tree constraint.
      * Partition succs variables into nbTrees (anti) arborescences
-     * <p/> succs[i] = offset+j means that j is the successor of i.
-     * <p/> and succs[i] = offset+i means that i is a root
+     * <p/>
+     * succs[i] = offset+j means that j is the successor of i.
+     * <p/>
+     * and succs[i] = offset+i means that i is a root
      * <p>
-     * <p/> dominator-based filtering: Fages & Lorca (CP'11)
-     * <p/> However, the filtering over nbTrees is quite light here
+     * <p/>
+     * dominator-based filtering: Fages & Lorca (CP'11)
+     * <p/>
+     * However, the filtering over nbTrees is quite light here
      *
-     * @param succs   successors variables, taking their domain in [offset,|succs|-1+offset]
+     * @param succs   successors variables, taking their domain in
+     *                [offset,|succs|-1+offset]
      * @param nbTrees number of arborescences (=number of loops)
      * @param offset  0 by default but 1 if used within MiniZinc
      *                (which counts from 1 to n instead of from 0 to n-1)
@@ -2378,8 +2570,7 @@ public interface IIntConstraintFactory extends ISelf<Model> {
     default Constraint tree(IntVar[] succs, IntVar nbTrees, int offset) {
         return new Constraint(ConstraintsName.TREE,
                 new PropAntiArborescences(succs, offset, false),
-                new PropKLoops(succs, offset, nbTrees)
-        );
+                new PropKLoops(succs, offset, nbTrees));
     }
 
     /**
