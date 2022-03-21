@@ -12,7 +12,7 @@ package org.chocosolver.solver.constraints.nary.knapsack;
 /**
  * KPItem
  */
-public class KPItem implements Comparable<KPItem>, WeightInterface, ProfitInterface {
+public class KPItem implements WeightInterface, ProfitInterface {
 
     private int profit;
     private int weight;
@@ -40,6 +40,18 @@ public class KPItem implements Comparable<KPItem>, WeightInterface, ProfitInterf
         this.profit = profit;
     }
 
+    public int getActivatedWeight() {
+        return weight;
+    }
+
+    public int getActivatedProfit() {
+        return profit;
+    }
+
+    public double getActivatedEfficiency() {
+        return (double) getActivatedProfit() / getActivatedWeight();
+    }
+
     public int getWeight() {
         return active ? weight : 0;
     }
@@ -56,14 +68,4 @@ public class KPItem implements Comparable<KPItem>, WeightInterface, ProfitInterf
         return active ? (double) getProfit() / getWeight() : 0;
     }
 
-    public int compareTo(KPItem item) {
-        // this.compareTo(item) > 0 iff this.efficiency > item.efficiency
-        int comparaison = getProfit() * item.getWeight() - item.getProfit() * getWeight();
-        if (comparaison == 0) {
-            // breaking ties in favor of smaller weights
-            return item.getWeight() - getWeight();
-        } else {
-            return comparaison;
-        }
-    }
 }

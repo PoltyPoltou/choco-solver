@@ -10,13 +10,15 @@
 package org.chocosolver.solver.constraints.nary.knapsack;
 
 public class Info {
-    public int index;
-    public double profit;
-    public int weight;
+    public final int index;
+    public final double profit;
+    public final int weight;
+    public final int weightWithoutCriticalItem;
 
-    public Info(int index, double profit, int weight) {
+    public Info(int index, double profit, int profitWithoutCriticalItem, int weight) {
         this.index = index;
         this.profit = profit;
         this.weight = weight;
+        this.weightWithoutCriticalItem = profitWithoutCriticalItem;
     }
 }

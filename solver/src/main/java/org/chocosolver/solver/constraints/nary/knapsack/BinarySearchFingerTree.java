@@ -10,6 +10,8 @@
 package org.chocosolver.solver.constraints.nary.knapsack;
 
 import java.util.List;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.function.Predicate;
 
@@ -22,18 +24,20 @@ public class BinarySearchFingerTree extends FingerTree<InnerNode, KPItem> {
         super(sortedItems);
         setupTree(factory);
     }
+
     /**
      * @param sortedWeights sorted items by efficiency !
-     * @param sortedEnergy sorted items by efficiency !
+     * @param sortedEnergy  sorted items by efficiency !
      */
-    public BinarySearchFingerTree(int[] sortedWeights,int[] sortedEnergy, InnerNodeFactory factory) {
+    public BinarySearchFingerTree(int[] sortedWeights, int[] sortedEnergy, InnerNodeFactory factory) {
         super();
         List<KPItem> sortedList = new ArrayList<>();
-        for(int i = 0; i < sortedEnergy.length; ++i){
-            sortedList.set(i, new KPItem(sortedEnergy[i],sortedWeights[i]));
+        for (int i = 0; i < sortedEnergy.length; ++i) {
+            sortedList.set(i, new KPItem(sortedEnergy[i], sortedWeights[i]));
         }
         init(sortedList);
     }
+
     private WeightInterface getNodeWeightInterface(int index) {
         if (isLeaf(index)) {
             return getLeaf(index);
@@ -90,7 +94,11 @@ public class BinarySearchFingerTree extends FingerTree<InnerNode, KPItem> {
      */
     private void updateTree(int leafIndex) {
         int index = getLeafParentIndex(leafIndex, false);
-        getInnerNode(index).setValue(getLeaf(leafIndex), getLeaf(getBrother(leafIndex)));
+        getInnerNode(index).setup();
+        getInnerNode(index).updateValue(getLeaf(leafIndex));
+        if (getBrother(leafIndex) != leafIndex) {
+            getInnerNode(index).updateValue(getLeaf(getBrother(leafIndex)));
+        }
         while (index > 0) {
             int parentIndex = getParentIndex(index);
             if (getBrother(index) != index) {
@@ -157,7 +165,7 @@ public class BinarySearchFingerTree extends FingerTree<InnerNode, KPItem> {
         boolean comingFromRightLeaf = false;
         boolean descending = false;
         while ((index != 0 || predicate.test(index))
-                && (isInnerNode(index) || !predicate.test(index))
+                && (index == startIndex || isInnerNode(index) || !predicate.test(index))
                 && (right ? minLeafIndexFromInnerNode(index) <= boundIndex
                         : maxLeafIndexFromInnerNode(index) >= boundIndex)) {
             if (descending) {
@@ -215,5 +223,17 @@ public class BinarySearchFingerTree extends FingerTree<InnerNode, KPItem> {
         }
         str += "}";
         return str;
+    }
+
+    /**
+     * Create the dot graph of the tree, useful for debug
+     */
+    public void createDotFile(String filename) {
+        try (FileWriter fWriter = new FileWriter(filename)) {
+            fWriter.write(this.toString());
+        } catch (Exception e) {
+            System.err.println("Error trying to create DOT file : ");
+            e.printStackTrace();
+        }
     }
 }

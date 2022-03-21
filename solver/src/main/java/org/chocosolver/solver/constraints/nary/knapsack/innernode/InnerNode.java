@@ -32,5 +32,6 @@ public interface InnerNode extends WeightInterface {
         updateValue(item2);
     }
 
+    // todo remove this method
     public boolean isActive();
 }

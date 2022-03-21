@@ -23,7 +23,9 @@ public class InnerNodeMaxWeight implements InnerNode {
     }
 
     public void updateValue(KPItem item) {
-        this.maxWeight = Math.max(item.getWeight(), maxWeight);
+        if (item.isActive()) {
+            this.maxWeight = Math.max(item.getWeight(), maxWeight);
+        }
     }
 
     public int getWeight() {

@@ -12,27 +12,40 @@ package org.chocosolver.solver.constraints.nary.knapsack;
 import java.util.List;
 
 import org.chocosolver.solver.constraints.nary.knapsack.innernode.factory.InnerNodeMaxWeightFactory;
-import org.chocosolver.solver.constraints.nary.knapsack.innernode.factory.InnerNodeSumFactory;
+import org.chocosolver.solver.constraints.nary.knapsack.innernode.factory.InnerNodeMinWeightFactory;
 
-public class ItemFindingSearchTree extends BinarySearchFingerTree {
+public class ItemFindingSearchTree {
+    private BinarySearchFingerTree maxTree;
+    private BinarySearchFingerTree minTree;
 
     public ItemFindingSearchTree(List<KPItem> sortedItems) {
-        super(sortedItems, new InnerNodeMaxWeightFactory());
+        maxTree = new BinarySearchFingerTree(sortedItems, new InnerNodeMaxWeightFactory());
+        minTree = new BinarySearchFingerTree(sortedItems, new InnerNodeMinWeightFactory());
     }
 
-    /**
-    * @param sortedWeights sorted items by efficiency !
-    * @param sortedEnergy sorted items by efficiency !
-    */
-   public ItemFindingSearchTree(int[] sortedWeights,int[] sortedEnergy) {
-       super(sortedWeights, sortedEnergy, new InnerNodeSumFactory());
-   }
-
     public int findNextRightItem(int startingIndex, int criticalIndex, int weight) {
-        return binarySearch(startingIndex, criticalIndex, i -> weight < getNodeWeight(i), true);
+        return maxTree.binarySearch(startingIndex, criticalIndex, i -> weight < maxTree.getNodeWeight(i), true);
     }
 
     public int findNextLeftItem(int startingIndex, int criticalIndex, int weight) {
-        return binarySearch(startingIndex, criticalIndex, i -> weight > getNodeWeight(i), false);
+        return minTree.binarySearch(startingIndex, criticalIndex, i -> weight > minTree.getNodeWeight(i), false);
+    }
+
+    public void activateLeaf(int index) {
+        maxTree.activateLeaf(index);
+        minTree.activateLeaf(index);
+    }
+
+    public void removeLeaf(int index) {
+        maxTree.removeLeaf(index);
+        minTree.removeLeaf(index);
+    }
+
+    protected int getLeafWeight(int globalLeafIndex) {
+        return maxTree.getLeaf(globalLeafIndex).getWeight();
+    }
+
+    protected int getNumberNodes() {
+        return maxTree.getNumberNodes();
     }
 }

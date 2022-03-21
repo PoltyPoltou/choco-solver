@@ -10,52 +10,43 @@
 package org.chocosolver.solver.constraints.nary.knapsack.innernode;
 
 import org.chocosolver.solver.constraints.nary.knapsack.KPItem;
-import org.chocosolver.solver.constraints.nary.knapsack.ProfitInterface;
 
-public class InnerNodeSum implements InnerNode, ProfitInterface {
-    private int sumWeight;
-    private int sumProfit;
+public class InnerNodeMinWeight implements InnerNode {
+    private int minWeight;
 
-    public InnerNodeSum() {
+    public InnerNodeMinWeight() {
         setup();
     }
 
     public void setup() {
-        sumWeight = 0;
-        sumProfit = 0;
+        this.minWeight = Integer.MAX_VALUE;
     }
 
     public void updateValue(KPItem item) {
         if (item.isActive()) {
-            sumWeight += item.getWeight();
-            sumProfit += item.getProfit();
+            this.minWeight = Math.min(item.getWeight(), minWeight);
         }
     }
 
     public int getWeight() {
-        return sumWeight;
-    }
-
-    public int getProfit() {
-        return sumProfit;
+        return minWeight;
     }
 
     public void updateValue(InnerNode node) {
         try {
-            InnerNodeSum nodeSum = (InnerNodeSum) node;
-            sumWeight += nodeSum.getWeight();
-            sumProfit += nodeSum.getProfit();
+            InnerNodeMinWeight nodeMaxWeight = (InnerNodeMinWeight) node;
+            this.minWeight = Math.min(nodeMaxWeight.getWeight(), minWeight);
         } catch (Exception e) {
             throw new RuntimeException("updateValue of InnerNode used with another type ");
         }
     }
 
     public boolean isActive() {
-        return !(sumProfit == 0 && sumWeight == 0);
+        return minWeight != Integer.MAX_VALUE;
     }
 
     public String toString() {
-        return "w=" + sumWeight + ",p=" + sumProfit;
+        return "w=" + minWeight;
     }
 
 }

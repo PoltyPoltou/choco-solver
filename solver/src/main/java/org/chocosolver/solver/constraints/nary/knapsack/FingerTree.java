@@ -35,8 +35,11 @@ public class FingerTree<NodeType, LeafType> {
     public FingerTree(List<LeafType> sortedItems) {
         init(sortedItems);
     }
-    protected FingerTree(){}
-    protected void init(List<LeafType> sortedItems){
+
+    protected FingerTree() {
+    }
+
+    protected void init(List<LeafType> sortedItems) {
         leafTreeList = new ArrayList<>(sortedItems);
         innerNodeTreeList = new ArrayList<>();
         int innerNodeSize = PowerMath.power2(1 + (int) (Math.log(sortedItems.size()) / Math.log(2))) - 1;
@@ -45,6 +48,7 @@ public class FingerTree<NodeType, LeafType> {
             innerNodeTreeList.add(null);
         }
     }
+
     public int getLeafParentIndex(int leafIndex) {
         return getLeafParentIndex(leafIndex, true);
     }
@@ -66,14 +70,20 @@ public class FingerTree<NodeType, LeafType> {
      * 
      * @param nodeIndex
      * @param right     true iff going right
-     * @return the node to the right/left at the same depth of nodeIndex
+     * @return the node to the right/left at the same depth of nodeIndex, -1 if it
+     *         is not a valid node
      */
     public int getFingerNeighboor(int nodeIndex, boolean right) {
         // checks if we are the last element to the border
         if (!PowerMath.isPowerOfTwo(right ? (nodeIndex + 2) : (nodeIndex + 1))) {
-            return nodeIndex + (right ? 1 : -1);
+            int index = nodeIndex + (right ? 1 : -1);
+            if (isLeaf(index) || isInnerNode(index)) {
+                return index;
+            } else {
+                return -1;
+            }
         } else {
-            throw new RuntimeException("Tried to get finger neigboor of the rightmost node");
+            throw new RuntimeException("Tried to get finger neigboor of the rightmost/leftmost node");
         }
     }
 
@@ -126,7 +136,7 @@ public class FingerTree<NodeType, LeafType> {
     /**
      * @param startingIndex starting node index
      * @param right         true will search to the right, false to the left
-     * @return index of the next node to explore
+     * @return index of the next node to explore, -1 if there is no node found
      */
     public int getNextNode(int startingIndex, boolean right) {
         int index = startingIndex;
@@ -134,7 +144,7 @@ public class FingerTree<NodeType, LeafType> {
             index = getParentIndex(index);
         }
         if (index == 0) {
-            throw new RuntimeException("getNextNode led to the end of the tree");
+            return -1;
         } else {
             return getFingerNeighboor(index, right);
         }
@@ -150,5 +160,9 @@ public class FingerTree<NodeType, LeafType> {
 
     public int getNumberNodes() {
         return getLeafTreeList().size() + getInnerNodeTreeList().size();
+    }
+
+    public int getNumberLeaves() {
+        return getLeafTreeList().size();
     }
 }

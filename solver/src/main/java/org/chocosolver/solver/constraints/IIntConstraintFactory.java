@@ -1592,7 +1592,7 @@ public interface IIntConstraintFactory extends ISelf<Model> {
         return new Constraint(ConstraintsName.KNAPSACK, ArrayUtils.append(
                 scalar1.propagators,
                 scalar2.propagators,
-                new Propagator[]{new PropKnapsack2(occurrences, weightSum, energySum, weight, energy)}
+                new Propagator[]{new PropKnapsackKatriel(occurrences, weightSum, energySum, weight, energy)}
         ));
     }
 
