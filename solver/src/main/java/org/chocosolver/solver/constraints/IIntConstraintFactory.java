@@ -23,6 +23,7 @@ import org.chocosolver.solver.constraints.extension.nary.*;
 import org.chocosolver.solver.constraints.nary.PropDiffN;
 import org.chocosolver.solver.constraints.nary.PropIntValuePrecedeChain;
 import org.chocosolver.solver.constraints.nary.PropKLoops;
+import org.chocosolver.solver.constraints.nary.PropKnapsack;
 import org.chocosolver.solver.constraints.nary.PropKnapsackKatriel;
 import org.chocosolver.solver.constraints.nary.alldifferent.AllDifferent;
 import org.chocosolver.solver.constraints.nary.alldifferent.conditions.Condition;
@@ -1707,7 +1708,8 @@ public interface IIntConstraintFactory extends ISelf<Model> {
         return new Constraint(ConstraintsName.KNAPSACK, ArrayUtils.append(
                 scalar1.propagators,
                 scalar2.propagators,
-                new Propagator[] { new PropKnapsackKatriel(occurrences, weightSum, energySum, weight, energy) }));
+                new Propagator[] { new PropKnapsackKatriel(occurrences, weightSum, energySum, weight, energy),
+                        new PropKnapsack(occurrences, weightSum, energySum, weight, energy) }));
     }
 
     /**
