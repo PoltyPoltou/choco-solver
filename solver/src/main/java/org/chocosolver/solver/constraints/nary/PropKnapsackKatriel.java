@@ -20,6 +20,7 @@ import org.chocosolver.solver.constraints.PropagatorPriority;
 import org.chocosolver.solver.exception.ContradictionException;
 import org.chocosolver.solver.variables.IntVar;
 import org.chocosolver.solver.variables.events.IntEventType;
+import org.chocosolver.solver.variables.events.PropagatorEventType;
 import org.chocosolver.util.ESat;
 import org.chocosolver.util.sort.ArraySort;
 import org.chocosolver.util.tools.ArrayUtils;
@@ -43,8 +44,6 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
 
     private final int[] order;
     private final int[] reverseOrder;
-    private final int[] weight;
-    private final int[] energy;
     private final int n;
     private final IntVar capacity;
     private final IntVar power;
@@ -63,13 +62,11 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
 
     public PropKnapsackKatriel(IntVar[] itemOccurence, IntVar capacity, IntVar power,
             int[] weight, int[] energy) {
-        super(ArrayUtils.append(itemOccurence, new IntVar[] { capacity, power }), PropagatorPriority.QUADRATIC, false);
+        super(ArrayUtils.append(itemOccurence, new IntVar[] { capacity, power }), PropagatorPriority.QUADRATIC, true);
         this.n = itemOccurence.length;
         this.itemState = new int[n];
         this.reverseOrder = new int[n];
         this.capacity = capacity;
-        this.weight = weight;
-        this.energy = energy;
         this.power = power;
         this.usedCapacity = 0;
         this.powerCreated = 0;
@@ -108,7 +105,7 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
 
     @Override
     public void propagate(int evtmask) throws ContradictionException {
-        propagateOnItems();
+        propagateOnItems(PropagatorEventType.isFullPropagation(evtmask));
     }
 
     @Override
@@ -122,7 +119,7 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
                 this.addItemToSolution(varIdx, false);
             }
         }
-        propagateOnItems();
+        forcePropagate(PropagatorEventType.FULL_PROPAGATION);
     }
 
     @Override
@@ -138,10 +135,14 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
 
     /**
      * propagation on items given the power LB and the capacity UB
+     * 
+     * @param computeCriticalWeight
      */
-    private void propagateOnItems() throws ContradictionException {
-        findWeirdItems();
-        this.criticalItemInfos = this.computingTree.findCriticalItem(this.capacity.getUB() - usedCapacity);
+    private void propagateOnItems(boolean computeCriticalWeight) throws ContradictionException {
+        // findWeirdItems();
+        if (computeCriticalWeight) {
+            this.criticalItemInfos = this.computingTree.findCriticalItem(this.capacity.getUB() - usedCapacity);
+        }
         // if power LB is not reachable so we can't filter (every item would be
         // mandatory)
         if (criticalItemInfos.profit + powerCreated >= power.getLB()) {
@@ -152,19 +153,6 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
             }
             for (int unorderedLeafIdx : forbiddenList) {
                 removeItemFromProblem(unorderedLeafIdx, true);
-            }
-        }
-    }
-
-    private void findWeirdItems() throws ContradictionException {
-        for (int i = 0; i < n; i++) {
-            if (this.vars[i].isInstantiated() && this.itemState[i] == NOT_DEFINED) {
-                if (this.vars[i].isInstantiatedTo(1)) {
-                    this.addItemToSolution(i, false);
-                } else {
-                    this.removeItemFromProblem(i, false);
-                }
-                // throw new RuntimeException("Item" + Integer.toString(i) + " went through !");
             }
         }
     }
