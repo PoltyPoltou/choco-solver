@@ -24,16 +24,26 @@ public class ItemComparator implements IntComparator {
     @Override
     public int compare(int i1, int i2) {
         // Compares efficiencies decreasingly
-        int comparaison = profits[i2] * weights[i1] - profits[i1] * weights[i2];
+        long comparaison = (long) profits[i2] * weights[i1] - (long) profits[i1] * weights[i2];
         if (comparaison == 0) {
+            long newComparaison;
             if (weights[i1] * weights[i2] == 0) {
-                return profits[i2] - profits[i1];
+                newComparaison = (long) profits[i2] - profits[i1];
             } else {
                 // breaking ties in favor of larger weights
-                return weights[i2] - weights[i1];
+                newComparaison = (long) weights[i2] - weights[i1];
             }
-        } else {
-            return comparaison;
+            if (newComparaison == 0) {
+                return 0;
+            } else if (newComparaison > 0) {
+                return 1;
+            } else {
+                return -1;
+            }
+        } else if (comparaison > 0) {
+            return 1;
+        } else { // comparaison < 0
+            return -1;
         }
     }
 
