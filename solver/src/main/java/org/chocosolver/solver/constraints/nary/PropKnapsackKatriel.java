@@ -73,7 +73,7 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
         Arrays.fill(this.itemState, 0);
         // we find the decreasing order of efficiency
         this.order = ArrayUtils.array(0, n - 1);
-        ArraySort sorter = new ArraySort(n, false, true);
+        ArraySort<Integer> sorter = new ArraySort<>(n, false, true);
         sorter.sort(order, n, new ItemComparator(weight, energy));
         this.orderedItems = new ArrayList<>();
         orderedItems.ensureCapacity(n);
