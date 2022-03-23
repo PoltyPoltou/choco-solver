@@ -55,6 +55,7 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
     // variables to keep track of the change from the original constraint expression
     private int usedCapacity;
     private int powerCreated;
+    private boolean mustRecomputeCriticalInfos;
 
     // ***********************************************************************************
     // CONSTRUCTORS
@@ -83,6 +84,7 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
         }
         this.findingTree = new ItemFindingSearchTree(orderedItems);
         this.computingTree = new ComputingLossWeightTree(orderedItems);
+        this.mustRecomputeCriticalInfos = true;
     }
 
     // ***********************************************************************************
@@ -105,7 +107,7 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
 
     @Override
     public void propagate(int evtmask) throws ContradictionException {
-        propagateOnItems(PropagatorEventType.isFullPropagation(evtmask));
+        propagateOnItems();
     }
 
     @Override
@@ -119,18 +121,15 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
                 this.addItemToSolution(varIdx, false);
             }
         }
+        // if lowerbound is change we don't need to recompute the
+        // fractionnal solution
+        mustRecomputeCriticalInfos = mustRecomputeCriticalInfos || varIdx < n + 1;
         forcePropagate(PropagatorEventType.FULL_PROPAGATION);
     }
 
     @Override
     public ESat isEntailed() {
-        if (powerCreated >= power.getUB() && usedCapacity <= capacity.getLB()) {
-            return ESat.TRUE;
-        } else if (powerCreated < power.getLB() || usedCapacity > capacity.getUB()) {
-            return ESat.FALSE;
-        } else {
-            return ESat.UNDEFINED;
-        }
+        return ESat.UNDEFINED;
     }
 
     /**
@@ -138,10 +137,10 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
      * 
      * @param computeCriticalWeight
      */
-    private void propagateOnItems(boolean computeCriticalWeight) throws ContradictionException {
-        // findWeirdItems();
-        if (computeCriticalWeight) {
+    private void propagateOnItems() throws ContradictionException {
+        if (mustRecomputeCriticalInfos) {
             this.criticalItemInfos = this.computingTree.findCriticalItem(this.capacity.getUB() - usedCapacity);
+            mustRecomputeCriticalInfos = false;
         }
         // if power LB is not reachable so we can't filter (every item would be
         // mandatory)
@@ -150,9 +149,11 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
             List<Integer> forbiddenList = findForbiddenItems();
             for (int unorderedLeafIdx : mandatoryList) {
                 addItemToSolution(unorderedLeafIdx, true);
+                mustRecomputeCriticalInfos = true;
             }
             for (int unorderedLeafIdx : forbiddenList) {
                 removeItemFromProblem(unorderedLeafIdx, true);
+                mustRecomputeCriticalInfos = true;
             }
         }
     }
