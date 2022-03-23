@@ -95,7 +95,6 @@ public class KnapsackTest {
 		while (s.solve()) {
 
 		}
-		s.printShortStatistics();
 		Assert.assertEquals(s.getBestSolutionValue(), 16537);
 	}
 }

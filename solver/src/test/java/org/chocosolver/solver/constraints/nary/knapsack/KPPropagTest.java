@@ -62,18 +62,9 @@ public class KPPropagTest {
         IntVar weight = m.intVar(wLB, wUB);
         m.knapsackOld(x, weight, profit, w, p).post();
         Solver sol = m.getSolver();
-        // sol.setSearch(Search.domOverWDegSearch(profit),
-        // Search.domOverWDegSearch(weight), Search.defaultSearch(m));
         sol.setSearch(Search.inputOrderLBSearch(x), Search.defaultSearch(m));
-        System.err.println("");
-        while (sol.solve()) {
-            for (BoolVar b : x) {
-                System.err.print(b.getValue() + " ");
-            }
-            System.err.print("p=" + profit.getValue() + " ");
-            System.err.print("w=" + weight.getValue() + " ");
-            System.err.println("");
-        }
+        while (sol.solve())
+            ;
         long nbSol = sol.getSolutionCount();
 
         m = new Model();
@@ -89,40 +80,10 @@ public class KPPropagTest {
         weight = m.intVar(wLB, wUB);
         m.knapsack(x, weight, profit, w, p).post();
         sol = m.getSolver();
-        // sol.setSearch(Search.domOverWDegSearch(profit),
-        // Search.domOverWDegSearch(weight), Search.defaultSearch(m));
         sol.setSearch(Search.inputOrderLBSearch(x), Search.defaultSearch(m));
-        System.err.println("");
-        while (sol.solve()) {
-            for (BoolVar b : x) {
-                System.err.print(b.getValue() + " ");
-            }
-            System.err.print("p=" + profit.getValue() + " ");
-            System.err.print("w=" + weight.getValue() + " ");
-            System.err.println("");
-        }
+        while (sol.solve())
+            ;
         Assert.assertEquals(sol.getSolutionCount(), nbSol);
     }
 
-    public void KpTest() {
-        KpInstance pb = KpInstance.getInstance1();
-        Model m = new Model();
-        BoolVar[] x = m.boolVarArray(pb.N);
-        IntVar profit = m.intVar(16785, pb.N * MathUtils.max(pb.c));
-        IntVar weight = m.intVar(0, pb.b[0]);
-        m.knapsack(x, weight, profit, pb.a[0], pb.c).post();
-        Solver sol = m.getSolver();
-        sol.setSearch(Search.domOverWDegSearch(profit), Search.domOverWDegSearch(weight), Search.defaultSearch(m));
-        System.err.println("");
-        while (sol.solve()) {
-            for (BoolVar b : x) {
-                System.err.print(b.getValue() + " ");
-            }
-            System.err.print("p=" + profit.getValue() + " ");
-            System.err.print("w=" + weight.getValue() + " ");
-            System.err.println("");
-        }
-        // Assert.assertEquals(sol.getSolutionCount(), 28);
-        Assert.assertEquals(sol.getBestSolutionValue(), 17038);
-    }
 }
