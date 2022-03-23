@@ -17,7 +17,6 @@ import org.chocosolver.solver.Solver;
 import org.chocosolver.solver.search.strategy.Search;
 import org.chocosolver.solver.variables.BoolVar;
 import org.chocosolver.solver.variables.IntVar;
-import org.chocosolver.util.tools.MathUtils;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
