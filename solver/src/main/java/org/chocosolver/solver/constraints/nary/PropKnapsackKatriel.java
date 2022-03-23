@@ -56,6 +56,7 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
     private int usedCapacity;
     private int powerCreated;
     private boolean mustRecomputeCriticalInfos;
+    private int lastComputedWorldIndex;
 
     // ***********************************************************************************
     // CONSTRUCTORS
@@ -71,6 +72,7 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
         this.power = power;
         this.usedCapacity = 0;
         this.powerCreated = 0;
+        this.lastComputedWorldIndex = 0;
         Arrays.fill(this.itemState, 0);
         // we find the decreasing order of efficiency
         this.order = ArrayUtils.array(0, n - 1);
@@ -123,13 +125,21 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
         }
         // if lowerbound is change we don't need to recompute the
         // fractionnal solution
-        mustRecomputeCriticalInfos = mustRecomputeCriticalInfos || varIdx < n + 1;
+        mustRecomputeCriticalInfos = mustRecomputeCriticalInfos || varIdx < n + 1
+                || this.getModel().getEnvironment().getWorldIndex() < lastComputedWorldIndex;
         forcePropagate(PropagatorEventType.FULL_PROPAGATION);
+
     }
 
     @Override
     public ESat isEntailed() {
         return ESat.UNDEFINED;
+    }
+
+    private void computeCriticalIndex() {
+        this.criticalItemInfos = this.computingTree.findCriticalItem(this.capacity.getUB() - usedCapacity);
+        mustRecomputeCriticalInfos = false;
+        lastComputedWorldIndex = this.getModel().getEnvironment().getWorldIndex();
     }
 
     /**
@@ -139,8 +149,7 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
      */
     private void propagateOnItems() throws ContradictionException {
         if (mustRecomputeCriticalInfos) {
-            this.criticalItemInfos = this.computingTree.findCriticalItem(this.capacity.getUB() - usedCapacity);
-            mustRecomputeCriticalInfos = false;
+            computeCriticalIndex();
         }
         // if power LB is not reachable so we can't filter (every item would be
         // mandatory)
