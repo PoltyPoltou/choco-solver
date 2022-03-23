@@ -83,7 +83,7 @@ public class FingerTree<NodeType, LeafType> {
                 return -1;
             }
         } else {
-            throw new RuntimeException("Tried to get finger neigboor of the rightmost/leftmost node");
+            return -1;
         }
     }
 
