@@ -118,7 +118,7 @@ public class FingerTree<NodeType, LeafType> {
     }
 
     public boolean isInnerNode(int index) {
-        return index < innerNodeTreeList.size();
+        return index < innerNodeTreeList.size() && index >= 0;
     }
 
     public NodeType getInnerNode(int index) {
