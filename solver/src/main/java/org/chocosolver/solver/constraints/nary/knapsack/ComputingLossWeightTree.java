@@ -15,7 +15,7 @@ import org.chocosolver.solver.constraints.nary.knapsack.innernode.factory.InnerN
 
 public class ComputingLossWeightTree extends BinarySearchFingerTree {
     // used to make mandatory and forbidden test return false on equality
-    static final double OFFSET = 1e-4;
+    public static final double OFFSET = 1e-4;
 
     /**
      * @param sortedWeights sorted items by efficiency !
@@ -102,23 +102,17 @@ public class ComputingLossWeightTree extends BinarySearchFingerTree {
      * @param itemIndex        global index of the item to test
      */
     public boolean isMandatory(Info criticalInfos, double profitLowerBound, int itemIndex) {
-        // a mandatory item cannot be after the critical item
-        // we don't consider inactive items
-        // item with 0 profit can be removed anyway
-        if (itemIndex > criticalInfos.index || !getLeaf(itemIndex).isActive() || getNodeProfit(itemIndex) == 0) {
-            return false;
-        }
-        double energyDeficitPossible = criticalInfos.profit - profitLowerBound;
+        double allowedProfitLoss = criticalInfos.profit - profitLowerBound;
         // special cases
         if (criticalInfos.index == getNumberNodes()) {
             // if the KP optimal solution is trivial
             // we can have every item in the solution
-            return getNodeProfit(itemIndex) > energyDeficitPossible + ComputingLossWeightTree.OFFSET;
+            return getNodeProfit(itemIndex) > allowedProfitLoss + ComputingLossWeightTree.OFFSET;
         }
         if (getNodeWeight(itemIndex) == 0) {
             // we just see if removing the profit of the item is allowed,
             // then it is NOT mandatory
-            return getNodeProfit(itemIndex) > energyDeficitPossible + ComputingLossWeightTree.OFFSET;
+            return getNodeProfit(itemIndex) > allowedProfitLoss + ComputingLossWeightTree.OFFSET;
         }
         if (getNodeWeight(criticalInfos.index) == 0) {
             throw new RuntimeException("Critical item has 0 weight, should NEVER happen");
@@ -149,7 +143,7 @@ public class ComputingLossWeightTree extends BinarySearchFingerTree {
         }
 
         // we are looking for the node that contains the "exceeding" item
-        while (profit + nextProfit - (weight + nextWeight) * itemEfficiency >= -energyDeficitPossible) {
+        while (profit + nextProfit - (weight + nextWeight) * itemEfficiency >= -allowedProfitLoss) {
             weight += nextWeight;
             profit += nextProfit;
             // speedup as we only need to know if weight >= itemWeight
@@ -160,7 +154,7 @@ public class ComputingLossWeightTree extends BinarySearchFingerTree {
             // there is no node left and we know that weight < itemWeight
             if (index == -1) {
                 // we must give up all of the item without additionnal profit
-                return itemWeight * itemEfficiency - profit > energyDeficitPossible
+                return itemWeight * itemEfficiency - profit > allowedProfitLoss
                         + ComputingLossWeightTree.OFFSET;
             }
             nextProfit = getNodeProfit(index);
@@ -175,7 +169,7 @@ public class ComputingLossWeightTree extends BinarySearchFingerTree {
             int leftChild = getLeftChild(index);
             nextProfit = getNodeProfit(leftChild);
             nextWeight = getNodeWeight(leftChild);
-            if (profit + nextProfit - (weight + nextWeight) * itemEfficiency <= -energyDeficitPossible) {
+            if (profit + nextProfit - (weight + nextWeight) * itemEfficiency <= -allowedProfitLoss) {
                 if (weight + nextWeight + ComputingLossWeightTree.OFFSET < itemWeight) {
                     return true;
                 }
@@ -193,13 +187,99 @@ public class ComputingLossWeightTree extends BinarySearchFingerTree {
         // Special case where we went to the end of the tree and the leaf does not
         // exists, thus we must give up the rest without additionnal profit
         if (!isLeaf(index)) {
-            return itemWeight * itemEfficiency - profit + ComputingLossWeightTree.OFFSET < energyDeficitPossible;
+            return itemWeight * itemEfficiency - profit + ComputingLossWeightTree.OFFSET < allowedProfitLoss;
         } else {
             // we have to compute the exact part of this item that can be used
-            double portionWeight = (weight * itemEfficiency - profit - energyDeficitPossible)
+            double portionWeight = (weight * itemEfficiency - profit - allowedProfitLoss)
                     / (getLeaf(index).getEfficiency() - itemEfficiency);
             return weight + portionWeight + ComputingLossWeightTree.OFFSET < itemWeight;
         }
+    }
+
+    public MandatoryInfos computeLimitWeight(Info criticalInfos,
+            int itemIndex, int startingIndex, double profitAccumulated,
+            double weightAccumulated, double allowedProfitLoss,
+            double startItemWeight) {
+        assert !isInnerNode(startingIndex);// TODO remove
+        if (getNodeWeight(itemIndex) == 0) {
+            // we just see if removing the profit of the item is allowed,
+            // then it is NOT mandatory
+            boolean decision = getNodeProfit(itemIndex) > allowedProfitLoss + ComputingLossWeightTree.OFFSET;
+            return new MandatoryInfos(decision, startingIndex, profitAccumulated, weightAccumulated, startItemWeight);
+        }
+        if (startingIndex == -1) {
+            return new MandatoryInfos(false, startingIndex, profitAccumulated, weightAccumulated, startItemWeight);
+        }
+        double profit = profitAccumulated;
+        double weight = weightAccumulated;
+        double nextWeight = startItemWeight;
+        double nextProfit = startItemWeight * getLeaf(startingIndex).getEfficiency();
+        int index = startingIndex;
+        double itemEfficiency = getLeaf(itemIndex).getEfficiency();
+
+        double itemWeight = 0;
+        if (itemIndex != criticalInfos.index) {
+            // the whole item is in the Dantzig solution
+            itemWeight = getNodeWeight(itemIndex);
+        } else {
+            // part of the item in the Dantzig solution
+            itemWeight = criticalInfos.weight - criticalInfos.weightWithoutCriticalItem;
+        }
+        if (!isLeaf(startingIndex)) {
+            // no node left to add
+            boolean decision = profitAccumulated - itemWeight * itemEfficiency > -allowedProfitLoss
+                    + ComputingLossWeightTree.OFFSET;
+            return new MandatoryInfos(decision, startingIndex, profitAccumulated, weightAccumulated, startItemWeight);
+        }
+        // we are looking for the node that contains the "exceeding" item
+        while (profit + nextProfit - (weight + nextWeight) * itemEfficiency >= -allowedProfitLoss) {
+            weight += nextWeight;
+            profit += nextProfit;
+            index = getNextNode(index, true);
+            // there is no node left and we know that weight < itemWeight
+            if (index == -1) {
+                // we must give up all of the item without additionnal profit
+                boolean decision = itemWeight * itemEfficiency - profit > allowedProfitLoss
+                        + ComputingLossWeightTree.OFFSET;
+                return new MandatoryInfos(decision, -1, profit, weight, 0);
+            }
+            nextProfit = getNodeProfit(index);
+            nextWeight = getNodeWeight(index);
+        }
+        // now we dive into the subtree to find the "exceeding" item
+        while (isInnerNode(index)) {
+            int leftChild = getLeftChild(index);
+            nextProfit = getNodeProfit(leftChild);
+            nextWeight = getNodeWeight(leftChild);
+            if (profit + nextProfit - (weight + nextWeight) * itemEfficiency <= -allowedProfitLoss) {
+                index = leftChild;
+            } else {
+                weight += nextWeight;
+                profit += nextProfit;
+                index = getRightChild(index);
+            }
+        }
+        boolean decision;
+        double remainingWeightEndItem = 0;
+        // Special case where we went to the end of the tree and the leaf does not
+        // exists, thus we must give up the rest without additionnal profit
+        if (!isLeaf(index)) {
+            decision = itemWeight * itemEfficiency - profit
+                    + ComputingLossWeightTree.OFFSET < allowedProfitLoss;
+        } else {
+            // we have to compute the exact part of this item that can be used
+            // TODO index efficiency == itemEfficiency == 0
+            double portionWeight = (weight * itemEfficiency - profit - allowedProfitLoss)
+                    / (getLeaf(index).getEfficiency() - itemEfficiency);
+            weight += portionWeight;
+            profit += portionWeight * getLeaf(index).getEfficiency();
+            remainingWeightEndItem = getNodeWeight(index) - portionWeight;
+            decision = weight + portionWeight + ComputingLossWeightTree.OFFSET < itemWeight;
+            if (Math.abs(weight * itemEfficiency - profit - allowedProfitLoss) > 0.01) {
+                throw new RuntimeException("boom");// TODO remove
+            }
+        }
+        return new MandatoryInfos(decision, index, profit, weight, remainingWeightEndItem);
     }
 
     /**
@@ -219,7 +299,7 @@ public class ComputingLossWeightTree extends BinarySearchFingerTree {
         // we compute the new critical item if we take itemIndex in the solution
         // we know that the item is after the original critical item, thus we don't need
         // to remove items in the tree
-        double energyDeficitPossible = criticalInfos.profit - profitLowerBound;
+        double allowedProfitLoss = criticalInfos.profit - profitLowerBound;
         // Weight and profit accumulated by the search
         int weight = 0;
         double profit = 0;
@@ -243,7 +323,7 @@ public class ComputingLossWeightTree extends BinarySearchFingerTree {
         }
 
         // we are looking for the node that contains the "exceeding" item
-        while ((weight + nextWeight) * itemEfficiency - profit - nextProfit >= -energyDeficitPossible) {
+        while ((weight + nextWeight) * itemEfficiency - profit - nextProfit >= -allowedProfitLoss) {
             weight += nextWeight;
             profit += nextProfit;
             // speedup as we only need to know if weight >= itemWeight
@@ -253,7 +333,7 @@ public class ComputingLossWeightTree extends BinarySearchFingerTree {
             index = getNextNode(index, false);
             // there is no node left and we know that weight < itemWeight
             if (index == -1) {
-                return itemWeight * itemEfficiency - profit + ComputingLossWeightTree.OFFSET < energyDeficitPossible;
+                return itemWeight * itemEfficiency - profit + ComputingLossWeightTree.OFFSET < allowedProfitLoss;
             }
             nextProfit = getNodeProfit(index);
             nextWeight = getNodeWeight(index);
@@ -267,7 +347,7 @@ public class ComputingLossWeightTree extends BinarySearchFingerTree {
             int rightChild = getRightChild(index);
             nextProfit = getNodeProfit(rightChild);
             nextWeight = getNodeWeight(rightChild);
-            if ((weight + nextWeight) * itemEfficiency - profit - nextProfit <= -energyDeficitPossible) {
+            if ((weight + nextWeight) * itemEfficiency - profit - nextProfit <= -allowedProfitLoss) {
                 if (weight + nextWeight + ComputingLossWeightTree.OFFSET < itemWeight) {
                     return true;
                 }
@@ -285,10 +365,10 @@ public class ComputingLossWeightTree extends BinarySearchFingerTree {
         // Special case where we went to the end of the tree and the leaf does not
         // exists
         if (!isLeaf(index)) {
-            return itemWeight * itemEfficiency - profit + ComputingLossWeightTree.OFFSET < energyDeficitPossible;
+            return itemWeight * itemEfficiency - profit + ComputingLossWeightTree.OFFSET < allowedProfitLoss;
         } else {
             // computes the exact part of the last item that can be used
-            double portionWeight = (profit - energyDeficitPossible - weight * itemEfficiency)
+            double portionWeight = (profit - allowedProfitLoss - weight * itemEfficiency)
                     / (itemEfficiency - getLeaf(index).getEfficiency());
             return weight + portionWeight + ComputingLossWeightTree.OFFSET < itemWeight;
         }

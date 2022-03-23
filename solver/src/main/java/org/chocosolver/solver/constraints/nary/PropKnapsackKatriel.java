@@ -161,7 +161,7 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
                 mustRecomputeCriticalInfos = true;
             }
             for (int unorderedLeafIdx : forbiddenList) {
-                removeItemFromProblem(unorderedLeafIdx, true);
+                // removeItemFromProblem(unorderedLeafIdx, true);
                 mustRecomputeCriticalInfos = true;
             }
         }
@@ -233,19 +233,49 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
     private List<Integer> findMandatoryItems() {
 
         List<Integer> mandatoryList = new LinkedList<>();
-        int maxWeight = 0;
-        int index = computingTree.leafToGlobalIndex(0);
+        double allowedProfitLoss = criticalItemInfos.profit + powerCreated - power.getLB();
         // finding first active item
-        if (!computingTree.getLeaf(index).isActive()) {
-            index = findingTree.findNextRightItem(index, criticalItemInfos.index, maxWeight);
+        int index = computingTree.leafToGlobalIndex(0);
+        if (index != -1 && !computingTree.getLeaf(index).isActive()) {
+            index = findingTree.findNextRightItem(index, criticalItemInfos.index, 0);
         }
-        while (index != -1) {
-            if (computingTree.isMandatory(criticalItemInfos, power.getLB() - powerCreated, index)) {
-                mandatoryList.add(order[computingTree.globalToLeaf(index)]);
+        if (index != -1) {
+            if (criticalItemInfos.index == computingTree.getNumberNodes()) {
+                // for trivial knapsack
+                while (index != -1) {
+                    if (computingTree.getNodeProfit(index) > allowedProfitLoss
+                            + ComputingLossWeightTree.OFFSET) {
+                        mandatoryList.add(order[computingTree.globalToLeaf(index)]);
+                    }
+                    index = findingTree.findNextRightItem(index, criticalItemInfos.index, 0);
+                }
             } else {
-                maxWeight = Math.max(maxWeight, computingTree.getNodeWeight(index));
+                // not a trivial KP
+                double criticalItemWeightNotInDantzig = computingTree.getNodeWeight(criticalItemInfos.index)
+                        - (criticalItemInfos.weight - criticalItemInfos.weightWithoutCriticalItem);
+                MandatoryInfos infos = computingTree.computeLimitWeight(
+                        criticalItemInfos, index, criticalItemInfos.index,
+                        0, 0, allowedProfitLoss, criticalItemWeightNotInDantzig);
+                int maxWeight = 0;
+                if (infos.decision) {
+                    mandatoryList.add(order[computingTree.globalToLeaf(index)]);
+                } else {
+                    maxWeight = Math.max(maxWeight, computingTree.getNodeWeight(index));
+                }
+                index = findingTree.findNextRightItem(index, criticalItemInfos.index, 0);
+
+                while (index != -1) {
+                    infos = computingTree.computeLimitWeight(criticalItemInfos, index, infos.endItem,
+                            infos.profitAccumulated, infos.weightAccumulated, allowedProfitLoss,
+                            infos.remainingWeightEndItem);
+                    if (infos.decision) {
+                        mandatoryList.add(order[computingTree.globalToLeaf(index)]);
+                    } else {
+                        maxWeight = Math.max(maxWeight, computingTree.getNodeWeight(index));
+                    }
+                    index = findingTree.findNextRightItem(index, criticalItemInfos.index, maxWeight);
+                }
             }
-            index = findingTree.findNextRightItem(index, criticalItemInfos.index, maxWeight);
         }
         return mandatoryList;
     }
