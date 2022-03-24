@@ -187,7 +187,7 @@ public class ComputingLossWeightTree extends BinarySearchFingerTree {
         // Special case where we went to the end of the tree and the leaf does not
         // exists, thus we must give up the rest without additionnal profit
         if (!isLeaf(index)) {
-            return itemWeight * itemEfficiency - profit + ComputingLossWeightTree.OFFSET < allowedProfitLoss;
+            return itemWeight * itemEfficiency - profit + ComputingLossWeightTree.OFFSET > allowedProfitLoss;
         } else {
             // we have to compute the exact part of this item that can be used
             double portionWeight = (weight * itemEfficiency - profit - allowedProfitLoss)
@@ -277,8 +277,7 @@ public class ComputingLossWeightTree extends BinarySearchFingerTree {
         // Special case where we went to the end of the tree and the leaf does not
         // exists, thus we must give up the rest without additionnal profit
         if (!isLeaf(index)) {
-            decision = itemWeight * itemEfficiency - profit
-                    + ComputingLossWeightTree.OFFSET < allowedProfitLoss;
+            decision = itemWeight * itemEfficiency - profit > allowedProfitLoss + ComputingLossWeightTree.OFFSET;
         } else {
             // we have to compute the exact part of this item that can be used
             // TODO index efficiency == itemEfficiency == 0
@@ -435,7 +434,7 @@ public class ComputingLossWeightTree extends BinarySearchFingerTree {
             index = getNextNode(index, false);
             // there is no node left and we know that weight < itemWeight
             if (index == -1) {
-                return itemWeight * itemEfficiency - profit + ComputingLossWeightTree.OFFSET < allowedProfitLoss;
+                return profit - itemWeight * itemEfficiency > allowedProfitLoss + ComputingLossWeightTree.OFFSET;
             }
             nextProfit = getNodeProfit(index);
             nextWeight = getNodeWeight(index);
@@ -467,7 +466,7 @@ public class ComputingLossWeightTree extends BinarySearchFingerTree {
         // Special case where we went to the end of the tree and the leaf does not
         // exists
         if (!isLeaf(index)) {
-            return itemWeight * itemEfficiency - profit + ComputingLossWeightTree.OFFSET < allowedProfitLoss;
+            return profit - itemWeight * itemEfficiency > allowedProfitLoss + ComputingLossWeightTree.OFFSET;
         } else {
             // computes the exact part of the last item that can be used
             double portionWeight = (profit - allowedProfitLoss - weight * itemEfficiency)
