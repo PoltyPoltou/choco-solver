@@ -179,11 +179,16 @@ public class BinarySearchFingerTree extends FingerTree<InnerNode, KPItem> {
                 }
             } else {
                 // we are going up
+                int childIndex = right ? getRightChild(index) : getLeftChild(index);
+                if (!isInnerNode(childIndex) && !isLeaf(childIndex)) {
+                    // Out of bounds
+                    return -1;
+                }
                 if (predicate.test(index) && isInnerNode(index)) {
                     if ((right ? !comingFromRightLeaf : comingFromRightLeaf)
-                            && predicate.test(right ? getRightChild(index) : getLeftChild(index))) {
+                            && predicate.test(childIndex)) {
                         // the current node accepts the predicate and we can explore the other child
-                        index = right ? getRightChild(index) : getLeftChild(index);
+                        index = childIndex;
                         descending = true;
                     } else if (index == 0) {
                         // the current node accepts the predicate but no more nodes can be inspected
