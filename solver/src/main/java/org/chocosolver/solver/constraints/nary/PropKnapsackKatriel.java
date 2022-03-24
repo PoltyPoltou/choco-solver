@@ -161,7 +161,7 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
                 mustRecomputeCriticalInfos = true;
             }
             for (int unorderedLeafIdx : forbiddenList) {
-                // removeItemFromProblem(unorderedLeafIdx, true);
+                removeItemFromProblem(unorderedLeafIdx, true);
                 mustRecomputeCriticalInfos = true;
             }
         }
@@ -251,21 +251,14 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
                 }
             } else {
                 // not a trivial KP
+                int maxWeight = 0;
                 double criticalItemWeightNotInDantzig = computingTree.getNodeWeight(criticalItemInfos.index)
                         - (criticalItemInfos.weight - criticalItemInfos.weightWithoutCriticalItem);
-                MandatoryInfos infos = computingTree.computeLimitWeight(
-                        criticalItemInfos, index, criticalItemInfos.index,
-                        0, 0, allowedProfitLoss, criticalItemWeightNotInDantzig);
-                int maxWeight = 0;
-                if (infos.decision) {
-                    mandatoryList.add(order[computingTree.globalToLeaf(index)]);
-                } else {
-                    maxWeight = Math.max(maxWeight, computingTree.getNodeWeight(index));
-                }
-                index = findingTree.findNextRightItem(index, criticalItemInfos.index, 0);
+                MandatoryInfos infos = new MandatoryInfos(false, criticalItemInfos.index,
+                        0, 0, criticalItemWeightNotInDantzig);
 
                 while (index != -1) {
-                    infos = computingTree.computeLimitWeight(criticalItemInfos, index, infos.endItem,
+                    infos = computingTree.computeLimitWeightMandatory(criticalItemInfos, index, infos.endItem,
                             infos.profitAccumulated, infos.weightAccumulated, allowedProfitLoss,
                             infos.remainingWeightEndItem);
                     if (infos.decision) {
@@ -283,24 +276,33 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
     private List<Integer> findForbiddenItems() {
 
         List<Integer> forbiddenList = new LinkedList<>();
-        int minWeight = Integer.MAX_VALUE;
-        int index = computingTree.getNumberNodes() - 1;
+        double allowedProfitLoss = criticalItemInfos.profit + powerCreated - power.getLB();
         // finding first active item
-        if (!computingTree.getLeaf(index).isActive()) {
-            index = findingTree.findNextLeftItem(index, criticalItemInfos.index, minWeight);
+        int index = computingTree.getNumberNodes() - 1;
+        if (index != -1 && !computingTree.getLeaf(index).isActive()) {
+            index = findingTree.findNextLeftItem(index, criticalItemInfos.index, Integer.MAX_VALUE);
         }
-        while (index != -1) {
-            if (computingTree.isForbidden(criticalItemInfos, power.getLB() - powerCreated, index)) {
-                forbiddenList.add(order[computingTree.globalToLeaf(index)]);
-            } else {
-                minWeight = Math.min(minWeight, computingTree.getNodeWeight(index));
+        if (index != -1) {
+            int minWeight = 0;
+            double criticalItemWeightInDantzig = criticalItemInfos.weight - criticalItemInfos.weightWithoutCriticalItem;
+            MandatoryInfos infos = new MandatoryInfos(false, criticalItemInfos.index,
+                    0, 0, criticalItemWeightInDantzig);
+            while (index != -1) {
+                infos = computingTree.computeLimitWeightForbidden(criticalItemInfos, index, infos.endItem,
+                        infos.profitAccumulated, infos.weightAccumulated, allowedProfitLoss,
+                        infos.remainingWeightEndItem);
+                if (infos.decision) {
+                    forbiddenList.add(order[computingTree.globalToLeaf(index)]);
+                } else {
+                    minWeight = Math.min(minWeight, computingTree.getNodeWeight(index));
+                }
+                index = findingTree.findNextLeftItem(index, criticalItemInfos.index, minWeight);
             }
-            index = findingTree.findNextLeftItem(index, criticalItemInfos.index, minWeight);
         }
         return forbiddenList;
     }
 
     private IEnvironment getEnvironment(int varIdx) {
-        return this.vars[0].getEnvironment();
+        return this.getModel().getEnvironment();
     }
 }
