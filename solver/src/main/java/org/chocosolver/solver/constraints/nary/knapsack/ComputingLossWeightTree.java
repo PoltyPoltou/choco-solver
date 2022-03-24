@@ -287,7 +287,7 @@ public class ComputingLossWeightTree extends BinarySearchFingerTree {
             weight += portionWeight;
             profit += portionWeight * getLeaf(index).getEfficiency();
             remainingWeightEndItem = getNodeWeight(index) - portionWeight;
-            decision = weight + portionWeight + ComputingLossWeightTree.OFFSET < itemWeight;
+            decision = weight + ComputingLossWeightTree.OFFSET < itemWeight;
             if (Math.abs(weight * itemEfficiency - profit - allowedProfitLoss) > 0.01) {
                 throw new RuntimeException("boom");// TODO remove
             }
@@ -376,7 +376,7 @@ public class ComputingLossWeightTree extends BinarySearchFingerTree {
             weight += portionWeight;
             profit += portionWeight * getLeaf(index).getEfficiency();
             remainingWeightEndItem = getNodeWeight(index) - portionWeight;
-            decision = weight + portionWeight + ComputingLossWeightTree.OFFSET < itemWeight;
+            decision = weight + ComputingLossWeightTree.OFFSET < itemWeight;
             if (Math.abs(profit - weight * itemEfficiency - allowedProfitLoss) > 0.01) {
                 throw new RuntimeException("boom");// TODO remove
             }
