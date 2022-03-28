@@ -50,7 +50,11 @@ public class BinarySearchFingerTree extends FingerTree<InnerNode, KPItem> {
     }
 
     public int getNodeWeight(int index) {
-        return getNodeWeightInterface(index).getWeight();
+        if (isInnerNode(index) || isLeaf(index)) {
+            return getNodeWeightInterface(index).getWeight();
+        } else {
+            return -1;
+        }
     }
 
     private void setupTree(InnerNodeFactory factory) {
@@ -180,10 +184,7 @@ public class BinarySearchFingerTree extends FingerTree<InnerNode, KPItem> {
             } else {
                 // we are going up
                 int childIndex = right ? getRightChild(index) : getLeftChild(index);
-                if (!isInnerNode(childIndex) && !isLeaf(childIndex)) {
-                    // Out of bounds
-                    return -1;
-                }
+
                 if (predicate.test(index) && isInnerNode(index)) {
                     if ((right ? !comingFromRightLeaf : comingFromRightLeaf)
                             && predicate.test(childIndex)) {

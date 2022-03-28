@@ -32,14 +32,9 @@ public class FindingTreeTest {
                 new KPItem(5, 18) });
     }
 
-    public void testSearch(ItemFindingSearchTree tree, int start, int expectendEnd, int bound,
-            boolean right) {
+    public void testSearch(ItemFindingSearchTree tree, int start, int expectendEnd, int bound) {
         int indexSearch = 0;
-        if (right) {
-            indexSearch = tree.findNextRightItem(start, bound, tree.getLeafWeight(start));
-        } else {
-            indexSearch = tree.findNextLeftItem(start, bound, tree.getLeafWeight(start));
-        }
+        indexSearch = tree.findNextRightItem(start, bound, tree.getNodeWeight(start));
         Assert.assertEquals(indexSearch, expectendEnd);
     }
 
@@ -69,17 +64,12 @@ public class FindingTreeTest {
     public void testSimpleBinarySearch() {
         ItemFindingSearchTree tree = new ItemFindingSearchTree(genItems());
         // test maxTree
-        testSearch(tree, 15, 16, tree.getNumberNodes(), true);
-        testSearch(tree, 18, 19, tree.getNumberNodes(), true);
-        testSearch(tree, 19, 24, tree.getNumberNodes(), true);
-        testSearch(tree, 20, 24, tree.getNumberNodes(), true);
-        testSearch(tree, 20, -1, 21, true);
-        // test minTree
-        testSearch(tree, 19, 18, 15, false);
-        testSearch(tree, 20, 18, 15, false);
-        testSearch(tree, 22, -1, 15, false);
-        testSearch(tree, 23, 22, 15, false);
-        testSearch(tree, 21, -1, 19, false);
+        testSearch(tree, 15, 16, tree.getNumberNodes());
+        testSearch(tree, 18, 19, tree.getNumberNodes());
+        testSearch(tree, 19, 24, tree.getNumberNodes());
+        testSearch(tree, 20, 24, tree.getNumberNodes());
+        testSearch(tree, 20, -1, 21);
+
     }
 
     @Test(groups = "10s")
@@ -87,14 +77,9 @@ public class FindingTreeTest {
         ItemFindingSearchTree tree = new ItemFindingSearchTree(genItems());
         tree.removeLeaf(19);
         // test maxTree
-        testSearch(tree, 18, 20, tree.getNumberNodes(), true);
-        testSearch(tree, 18, -1, 19, true);
-        testSearch(tree, 20, 24, tree.getNumberNodes(), true);
-        // test minTree
-        tree.removeLeaf(22);
-        testSearch(tree, 23, 17, 15, false);
-        testSearch(tree, 23, -1, 20, false);
-        testSearch(tree, 24, 23, 15, false);
-        testSearch(tree, 20, 18, 15, false);
+        testSearch(tree, 18, 20, tree.getNumberNodes());
+        testSearch(tree, 18, -1, 19);
+        testSearch(tree, 20, 24, tree.getNumberNodes());
+
     }
 }

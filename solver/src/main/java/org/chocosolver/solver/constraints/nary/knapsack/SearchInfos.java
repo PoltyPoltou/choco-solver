@@ -9,14 +9,18 @@
  */
 package org.chocosolver.solver.constraints.nary.knapsack;
 
-public class MandatoryInfos {
+/**
+ * class to transmit informations about the last search, useful for
+ * {@code computeLimitWeightForbidden} and {@code computeLimitWeightMandatory}
+ */
+public class SearchInfos {
     public final boolean decision;
     public final int endItem;
     public final double profitAccumulated;
     public final double weightAccumulated;
     public final double remainingWeightEndItem;
 
-    public MandatoryInfos(boolean decision, int endItem, double profitAccumulated, double weightAccumulated,
+    public SearchInfos(boolean decision, int endItem, double profitAccumulated, double weightAccumulated,
             double remainingWeightEndItem) {
         this.decision = decision;
         this.endItem = endItem;

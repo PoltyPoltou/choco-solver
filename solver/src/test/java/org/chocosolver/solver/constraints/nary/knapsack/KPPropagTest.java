@@ -44,9 +44,9 @@ public class KPPropagTest {
     @Test
     public void KpTest2() {
         int wLB = 10;
-        int wUB = 20;
-        int pLB = 25;
-        int pUB = 35;
+        int wUB = 30;
+        int pLB = 30;
+        int pUB = 50;
         Model m = new Model();
         int n = genItems().size();
         BoolVar[] x = m.boolVarArray(n);
@@ -62,8 +62,13 @@ public class KPPropagTest {
         m.knapsackOld(x, weight, profit, w, p).post();
         Solver sol = m.getSolver();
         sol.setSearch(Search.inputOrderLBSearch(x), Search.defaultSearch(m));
-        while (sol.solve())
-            ;
+        while (sol.solve()) {
+            for (IntVar var : x) {
+                System.err.print(var.getValue() + " ");
+            }
+            System.err.println();
+        }
+        ;
         long nbSol = sol.getSolutionCount();
 
         m = new Model();
@@ -80,8 +85,12 @@ public class KPPropagTest {
         m.knapsack(x, weight, profit, w, p).post();
         sol = m.getSolver();
         sol.setSearch(Search.inputOrderLBSearch(x), Search.defaultSearch(m));
-        while (sol.solve())
-            ;
+        while (sol.solve()) {
+            for (IntVar var : x) {
+                System.err.print(var.getValue() + " ");
+            }
+            System.err.println();
+        }
         Assert.assertEquals(sol.getSolutionCount(), nbSol);
     }
 

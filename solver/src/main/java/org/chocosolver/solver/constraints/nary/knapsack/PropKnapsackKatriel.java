@@ -7,7 +7,7 @@
  *
  * See LICENSE file in the project root for full license information.
  */
-package org.chocosolver.solver.constraints.nary;
+package org.chocosolver.solver.constraints.nary.knapsack;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,8 +24,6 @@ import org.chocosolver.solver.variables.events.PropagatorEventType;
 import org.chocosolver.util.ESat;
 import org.chocosolver.util.sort.ArraySort;
 import org.chocosolver.util.tools.ArrayUtils;
-
-import org.chocosolver.solver.constraints.nary.knapsack.*;
 
 /**
  * Propagator for the Knapsack constraint
@@ -109,50 +107,11 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
 
     @Override
     public void propagate(int evtmask) throws ContradictionException {
-        propagateOnItems();
-    }
-
-    @Override
-    public void propagate(int varIdx, int mask) throws ContradictionException {
-        if (varIdx < n) {
-            // item changed
-            // we update the trees
-            if (this.vars[varIdx].isInstantiatedTo(0)) {
-                this.removeItemFromProblem(varIdx, false);
-            } else if (this.vars[varIdx].isInstantiatedTo(1)) {
-                this.addItemToSolution(varIdx, false);
-            }
-        }
-        // if lowerbound is change we don't need to recompute the
-        // fractionnal solution
-        mustRecomputeCriticalInfos = mustRecomputeCriticalInfos || varIdx < n + 1
-                || this.getModel().getEnvironment().getWorldIndex() < lastComputedWorldIndex;
-        forcePropagate(PropagatorEventType.FULL_PROPAGATION);
-
-    }
-
-    @Override
-    public ESat isEntailed() {
-        return ESat.UNDEFINED;
-    }
-
-    private void computeCriticalIndex() {
-        this.criticalItemInfos = this.computingTree.findCriticalItem(this.capacity.getUB() - usedCapacity);
-        mustRecomputeCriticalInfos = false;
-        lastComputedWorldIndex = this.getModel().getEnvironment().getWorldIndex();
-    }
-
-    /**
-     * propagation on items given the power LB and the capacity UB
-     * 
-     * @param computeCriticalWeight
-     */
-    private void propagateOnItems() throws ContradictionException {
         if (mustRecomputeCriticalInfos) {
             computeCriticalIndex();
         }
-        // if power LB is not reachable so we can't filter (every item would be
-        // mandatory)
+        // if power LB is not reachable so we can't filter
+        // (every item would be mandatory and forbidden)
         if (criticalItemInfos.profit + powerCreated >= power.getLB()) {
             List<Integer> mandatoryList = findMandatoryItems();
             List<Integer> forbiddenList = findForbiddenItems();
@@ -167,22 +126,61 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
         }
     }
 
+    @Override
+    public void propagate(int varIdx, int mask) throws ContradictionException {
+        if (varIdx < n) {
+            // item changed
+            // we update the trees
+            if (this.vars[varIdx].isInstantiatedTo(0)) {
+                this.removeItemFromProblem(varIdx, false);
+            } else if (this.vars[varIdx].isInstantiatedTo(1)) {
+                this.addItemToSolution(varIdx, false);
+            }
+        }
+        /*
+         * we recompute the Dantzig solution if :
+         * - a backtrack occured
+         * - capacity UB changed
+         * - an item has been determined
+         */
+        mustRecomputeCriticalInfos = mustRecomputeCriticalInfos || varIdx < n + 1
+                || this.getModel().getEnvironment().getWorldIndex() < lastComputedWorldIndex;
+        forcePropagate(PropagatorEventType.FULL_PROPAGATION);
+
+    }
+
+    @Override
+    public ESat isEntailed() {
+        // sum propagators of the KP contraint define the entailment
+        return ESat.UNDEFINED;
+    }
+
+    /**
+     * compute the Dantzig solution and set members variables
+     */
+    private void computeCriticalIndex() {
+        this.criticalItemInfos = this.computingTree.findCriticalItem(this.capacity.getUB() - usedCapacity);
+        mustRecomputeCriticalInfos = false;
+        lastComputedWorldIndex = this.getModel().getEnvironment().getWorldIndex();
+    }
+
     /**
      * changes the constraint such that the item is in the solution
      * Informs backtrack environment what to do
      *
-     * @param i index of an item in the list given in the constructor
+     * @param i              index of an item in the list given in the constructor
+     * @param removeVarValue true to remove the value in the variable domain
      */
     private void addItemToSolution(int i, boolean removeVarValue) throws ContradictionException {
         if (this.itemState[i] == NOT_DEFINED) {
-            int sortedGlobalIndex = computingTree.leafToGlobalIndex(this.reverseOrder[i]);
             this.itemState[i] = ADDED;
+            int sortedGlobalIndex = computingTree.leafToGlobalIndex(this.reverseOrder[i]);
             computingTree.removeLeaf(sortedGlobalIndex);
             findingTree.removeLeaf(sortedGlobalIndex);
             if (removeVarValue) {
                 vars[i].removeValue(0, this);
             }
-            getEnvironment(i).save(() -> activateItemToProblem(i, ADDED));
+            getEnvironment().save(() -> activateItemToProblem(i, ADDED));
             // we update intern values
             this.usedCapacity += computingTree.getLeaf(sortedGlobalIndex).getActivatedWeight();
             this.powerCreated += computingTree.getLeaf(sortedGlobalIndex).getActivatedProfit();
@@ -193,24 +191,25 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
      * changes the constraint such that the item is NOT in the solution
      * Informs backtrack environment what to do
      *
-     * @param i index of an item in the list given in the constructor
+     * @param i              index of an item in the list given in the constructor
+     * @param removeVarValue true to remove the value in the variable domain
      */
     private void removeItemFromProblem(int i, boolean removeVarValue) throws ContradictionException {
         if (this.itemState[i] == NOT_DEFINED) {
-            int sortedGlobalIndex = computingTree.leafToGlobalIndex(this.reverseOrder[i]);
             this.itemState[i] = REMOVED;
+            int sortedGlobalIndex = computingTree.leafToGlobalIndex(this.reverseOrder[i]);
             computingTree.removeLeaf(sortedGlobalIndex);
             findingTree.removeLeaf(sortedGlobalIndex);
             if (removeVarValue) {
                 vars[i].removeValue(1, this);
             }
-            getEnvironment(i).save(() -> activateItemToProblem(i, REMOVED));
+            getEnvironment().save(() -> activateItemToProblem(i, REMOVED));
         }
     }
 
     /**
      * changes the propagator state such that the item is not determined anymore
-     *
+     * 
      * @param i             index of an item in the list given in the constructor
      * @param expectedState state of the item when reverting
      */
@@ -226,66 +225,71 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
             }
             this.itemState[i] = NOT_DEFINED;
         } else if (this.itemState[i] != NOT_DEFINED) {
-            throw new RuntimeException("???");
+            throw new RuntimeException("the item reverted does not have the expected state");
         }
     }
 
+    /**
+     * exploits {@code computeLimitWeightMandatory} to find all mandatory items in a
+     * linear scan
+     * 
+     * @return indexes (given by the constructor) of mandatory items
+     */
     private List<Integer> findMandatoryItems() {
 
         List<Integer> mandatoryList = new LinkedList<>();
         double allowedProfitLoss = criticalItemInfos.profit + powerCreated - power.getLB();
         // finding first active item
         int index = computingTree.leafToGlobalIndex(0);
-        if (index != -1 && !computingTree.getLeaf(index).isActive()) {
-            index = findingTree.findNextRightItem(index, criticalItemInfos.index, 0);
-        }
         if (index != -1) {
-            if (criticalItemInfos.index == computingTree.getNumberNodes()) {
-                // for trivial knapsack
-                while (index != -1) {
-                    if (computingTree.getNodeProfit(index) > allowedProfitLoss
-                            + ComputingLossWeightTree.OFFSET) {
-                        mandatoryList.add(order[computingTree.globalToLeaf(index)]);
-                    }
-                    index = findingTree.findNextRightItem(index, criticalItemInfos.index, 0);
-                }
-            } else {
-                // not a trivial KP
-                int maxWeight = 0;
-                double criticalItemWeightNotInDantzig = computingTree.getNodeWeight(criticalItemInfos.index)
+            if (!computingTree.getLeaf(index).isActive()) {
+                index = findingTree.findNextRightItem(index, criticalItemInfos.index, 0);
+            }
+            // not a trivial KP
+            int maxWeight = 0;
+            double criticalItemWeightNotInDantzig = 0;
+            if (computingTree.isLeaf(criticalItemInfos.index)) {
+                criticalItemWeightNotInDantzig = computingTree.getNodeWeight(criticalItemInfos.index)
                         - (criticalItemInfos.weight - criticalItemInfos.weightWithoutCriticalItem);
-                MandatoryInfos infos = new MandatoryInfos(false, criticalItemInfos.index,
-                        0, 0, criticalItemWeightNotInDantzig);
+            }
+            SearchInfos infos = new SearchInfos(false, criticalItemInfos.index,
+                    0, 0, criticalItemWeightNotInDantzig);
 
-                while (index != -1) {
-                    infos = computingTree.computeLimitWeightMandatory(criticalItemInfos, index, infos.endItem,
-                            infos.profitAccumulated, infos.weightAccumulated, allowedProfitLoss,
-                            infos.remainingWeightEndItem);
-                    if (infos.decision) {
-                        mandatoryList.add(order[computingTree.globalToLeaf(index)]);
-                    } else {
-                        maxWeight = Math.max(maxWeight, computingTree.getNodeWeight(index));
-                    }
-                    index = findingTree.findNextRightItem(index, criticalItemInfos.index, maxWeight);
+            while (index != -1) {
+                infos = computingTree.computeLimitWeightMandatory(criticalItemInfos, index, infos.endItem,
+                        infos.profitAccumulated, infos.weightAccumulated, allowedProfitLoss,
+                        infos.remainingWeightEndItem);
+                if (infos.decision) {
+                    mandatoryList.add(order[computingTree.globalToLeaf(index)]);
+                } else {
+                    maxWeight = Math.max(maxWeight, computingTree.getNodeWeight(index));
+                    maxWeight = Math.max(maxWeight, (int) infos.weightAccumulated);
                 }
+                index = findingTree.findNextRightItem(index, criticalItemInfos.index, maxWeight);
             }
         }
         return mandatoryList;
     }
 
+    /**
+     * exploits {@code computeLimitWeightForbidden} to find all forbidden items in a
+     * linear scan
+     * 
+     * @return indexes (given by the constructor) of forbidden items
+     */
     private List<Integer> findForbiddenItems() {
 
         List<Integer> forbiddenList = new LinkedList<>();
         double allowedProfitLoss = criticalItemInfos.profit + powerCreated - power.getLB();
         // finding first active item
-        int index = computingTree.getNumberNodes() - 1;
-        if (index != -1 && !computingTree.getLeaf(index).isActive()) {
-            index = findingTree.findNextLeftItem(index, criticalItemInfos.index, Integer.MAX_VALUE);
-        }
-        if (index != -1) {
-            int minWeight = 0;
+        int index = criticalItemInfos.index;
+        if (index != -1 && criticalItemInfos.index != computingTree.getNumberNodes()) {
+            int maxWeight = 0;
             double criticalItemWeightInDantzig = criticalItemInfos.weight - criticalItemInfos.weightWithoutCriticalItem;
-            MandatoryInfos infos = new MandatoryInfos(false, criticalItemInfos.index,
+            if (!computingTree.getLeaf(index).isActive()) {
+                index = findingTree.findNextRightItem(index, computingTree.getNumberNodes() - 1, maxWeight);
+            }
+            SearchInfos infos = new SearchInfos(false, criticalItemInfos.index,
                     0, 0, criticalItemWeightInDantzig);
             while (index != -1) {
                 infos = computingTree.computeLimitWeightForbidden(criticalItemInfos, index, infos.endItem,
@@ -294,15 +298,16 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
                 if (infos.decision) {
                     forbiddenList.add(order[computingTree.globalToLeaf(index)]);
                 } else {
-                    minWeight = Math.min(minWeight, computingTree.getNodeWeight(index));
+                    maxWeight = Math.max(maxWeight, (int) infos.weightAccumulated);
+                    maxWeight = Math.max(maxWeight, computingTree.getNodeWeight(index));
                 }
-                index = findingTree.findNextLeftItem(index, criticalItemInfos.index, minWeight);
+                index = findingTree.findNextRightItem(index, computingTree.getNumberNodes() - 1, maxWeight);
             }
         }
         return forbiddenList;
     }
 
-    private IEnvironment getEnvironment(int varIdx) {
+    private IEnvironment getEnvironment() {
         return this.getModel().getEnvironment();
     }
 }
