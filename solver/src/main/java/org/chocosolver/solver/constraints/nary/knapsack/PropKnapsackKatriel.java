@@ -256,12 +256,13 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
                     0, 0, criticalItemWeightNotInDantzig);
 
             while (index != -1) {
-                infos = computingTree.computeLimitWeightMandatory(criticalItemInfos, index, infos.endItem,
+                infos = computingTree.computeEquivalentWeightMandatory(criticalItemInfos, index, infos.endItem,
                         infos.profitAccumulated, infos.weightAccumulated, allowedProfitLoss,
                         infos.remainingWeightEndItem);
                 if (infos.decision) {
                     mandatoryList.add(order[computingTree.globalToLeaf(index)]);
                 } else {
+                    // strong skipping
                     maxWeight = Math.max(maxWeight, computingTree.getNodeWeight(index));
                     maxWeight = Math.max(maxWeight, (int) infos.weightAccumulated);
                 }
@@ -292,12 +293,13 @@ public class PropKnapsackKatriel extends Propagator<IntVar> {
             SearchInfos infos = new SearchInfos(false, criticalItemInfos.index,
                     0, 0, criticalItemWeightInDantzig);
             while (index != -1) {
-                infos = computingTree.computeLimitWeightForbidden(criticalItemInfos, index, infos.endItem,
+                infos = computingTree.computeEquivalentWeightForbidden(criticalItemInfos, index, infos.endItem,
                         infos.profitAccumulated, infos.weightAccumulated, allowedProfitLoss,
                         infos.remainingWeightEndItem);
                 if (infos.decision) {
                     forbiddenList.add(order[computingTree.globalToLeaf(index)]);
                 } else {
+                    // strong skipping
                     maxWeight = Math.max(maxWeight, (int) infos.weightAccumulated);
                     maxWeight = Math.max(maxWeight, computingTree.getNodeWeight(index));
                 }

@@ -13,6 +13,8 @@ import java.lang.Math;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.chocosolver.util.tools.MathUtils;
+
 /**
  * FingerTree
  */
@@ -42,7 +44,7 @@ public class FingerTree<NodeType, LeafType> {
     protected void init(List<LeafType> sortedItems) {
         leafTreeList = new ArrayList<>(sortedItems);
         innerNodeTreeList = new ArrayList<>();
-        int innerNodeSize = PowerMath.power2(1 + (int) (Math.log(sortedItems.size()) / Math.log(2))) - 1;
+        int innerNodeSize = (int) Math.pow(2, 1 + (int) (Math.log(sortedItems.size()) / Math.log(2))) - 1;
         innerNodeTreeList.ensureCapacity(innerNodeSize);
         for (int i = 0; i < innerNodeSize; i++) {
             innerNodeTreeList.add(null);
@@ -75,7 +77,7 @@ public class FingerTree<NodeType, LeafType> {
      */
     public int getFingerNeighboor(int nodeIndex, boolean right) {
         // checks if we are the last element to the border
-        if (!PowerMath.isPowerOfTwo(right ? (nodeIndex + 2) : (nodeIndex + 1))) {
+        if (!MathUtils.isPowerOfTwo(right ? (nodeIndex + 2) : (nodeIndex + 1))) {
             int index = nodeIndex + (right ? 1 : -1);
             if (isLeaf(index) || isInnerNode(index)) {
                 return index;

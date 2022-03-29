@@ -105,7 +105,7 @@ public class ComputingLossWeightTree extends BinarySearchFingerTree {
      * @param startItemWeight   weight to consider for the startingIndex item
      * @return
      */
-    public SearchInfos computeLimitWeightMandatory(Info criticalInfos,
+    public SearchInfos computeEquivalentWeightMandatory(Info criticalInfos,
             int itemIndex, int startingIndex, double profitAccumulated,
             double weightAccumulated, double allowedProfitLoss,
             double startItemWeight) {
@@ -202,7 +202,7 @@ public class ComputingLossWeightTree extends BinarySearchFingerTree {
      * @param startItemWeight   weight to consider for the startingIndex item
      * @return
      */
-    public SearchInfos computeLimitWeightForbidden(Info criticalInfos,
+    public SearchInfos computeEquivalentWeightForbidden(Info criticalInfos,
             int itemIndex, int startingIndex, double profitAccumulated,
             double weightAccumulated, double allowedProfitLoss,
             double startItemWeight) {
